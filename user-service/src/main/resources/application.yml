@@ -1,0 +1,27 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/communication_platform?currentSchema=user_service
+    username: app_user
+    password: ${APP_DB_PASSWORD}
+    hikari:
+      schema: user_service
+
+  jpa:
+    properties:
+      hibernate:
+        default_schema: user_service
+
+  flyway:
+    enabled: true
+    schemas: user_service
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+security:
+    jwt:
+      secret: ${JWT_SECRET}
+      expiration-ms: 3600000
+      refresh-ms: 2592000000
+
+server:
+  port: 8082

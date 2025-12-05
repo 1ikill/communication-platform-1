@@ -1,0 +1,42 @@
+spring:
+  datasource:
+    url: ${TELEGRAM_SERVICE_DB_URL}
+    username: app_user
+    password: ${APP_DB_PASSWORD}
+    hikari:
+      schema: telegram_service
+  jpa:
+    properties:
+      hibernate:
+        default_schema: telegram_service
+  flyway:
+    enabled: true
+    schemas: telegram_service
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 2048MB
+      max-request-size: 2048MB
+server:
+  port: 8084
+  compression:
+    enabled: true
+    mime-types: text/html, text/xml, text/plain, text/css, text/javascript, application/javascript, application/json
+    min-response-size: 1024
+
+credentials:
+  secret-key: ${TELEGRAM_SERVICE_ENCRYPTION_KEY}
+
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+
+telegram:
+      use-message-database: false
+      use-secret-chats: true
+      system-language-code: en
+      device-model: Desktop
+      application-version: "1.0"
+      database-directory: "/var/lib/tdlib/"

@@ -1,0 +1,32 @@
+server:
+  port: 8083
+
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+
+services:
+  user-service:
+    base-url: ${USER_SERVICE_URL}
+    register-url: ${services.user-service.base-url}/auth/register
+    login-url: ${services.user-service.base-url}/auth/login
+    refresh-url: ${services.user-service.base-url}/auth/refresh
+    create-user-admin-url: ${services.user-service.base-url}/admin/create-user
+    patch-user-url: ${services.user-service.base-url}/path/
+    get-me=url: ${services.user-service.base-url}/me
+  telegram-service:
+    base-url: ${TELEGRAM_SERVICE_URL}
+    get-chat-folders-url: ${services.telegram-service.base-url}/chats/folders
+    get-chats-folder-url: ${services.telegram-service.base-url}/folder
+    get-chat-messages-url: ${services.telegram-service.base-url}/messages
+    send-text-message-url: ${services.telegram-service.base-url}/text
+    send-image-message-url: ${services.telegram-service.base-url}/image
+    send-video-message-url: ${services.telegram-service.base-url}/videos
+  ai-service:
+    base-url: ${AI_SERVICE_URL}
+    add-contact-profile-url: ${services.ai-service.base-url}/profiles/add
+    patch-contact-profile-url: ${services.ai-service.base-url}/profiles/
+    format-message-url: ${services.ai-service.base-url}/format-message
+  gmail-service:
+    base-url: ${GMAIL_SERVICE_URL}
+    send-text-message-url: ${services.gmail-service.base-url}/send

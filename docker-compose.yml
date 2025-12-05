@@ -1,0 +1,124 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: communication_pg
+    environment:
+      POSTGRES_DB: communication_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - communication_pgdata_1:/var/lib/postgresql/data
+      - ./database-init:/docker-entrypoint-initdb.d
+    env_file:
+      - .env
+
+  user-service:
+    build: ./user-service
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/communication_platform
+      SPRING_DATASOURCE_USERNAME: app_user
+      SPRING_DATASOURCE_PASSWORD: ${APP_DB_PASSWORD}
+      SPRING_FLYWAY_ENABLED: true
+      SPRING_FLYWAY_DEFAULT_SCHEMA: user_service
+      SPRING_FLYWAY_SCHEMAS: user_service
+    env_file:
+      - .env
+    ports:
+      - "8082:8082"
+
+  main-service:
+    build: ./main-service
+    depends_on:
+      - postgres
+      - user-service
+      - telegram-service
+      - ai-service
+    environment:
+      USER_SERVICE_URL: http://user-service:8082/users
+      TELEGRAM_SERVICE_URL: http://telegram-service:8084/telegram
+      AI_SERVICE_URL: http://ai-service:8085/ai-service
+      GMAIL_SERVICE_URL: http://gmail-service:8086/gmail
+      SPRING_FLYWAY_ENABLED: false
+    env_file:
+      - .env
+    ports:
+      - "8083:8083"
+
+  telegram-service:
+    build: ./telegram-service
+    depends_on:
+      - postgres
+      - user-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/communication_platform
+      SPRING_DATASOURCE_USERNAME: app_user
+      SPRING_DATASOURCE_PASSWORD: ${APP_DB_PASSWORD}
+      SPRING_FLYWAY_ENABLED: true
+      SPRING_FLYWAY_DEFAULT_SCHEMA: telegram_service
+      SPRING_FLYWAY_SCHEMAS: telegram_service
+    env_file:
+      - .env
+    ports:
+      - "8084:8084"
+    volumes:
+      - telegram_tdlib_data:/var/lib/tdlib
+
+  ai-service:
+    build: ./ai-service
+    depends_on:
+      - postgres
+      - user-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/communication_platform
+      SPRING_DATASOURCE_USERNAME: app_user
+      SPRING_DATASOURCE_PASSWORD: ${APP_DB_PASSWORD}
+      SPRING_FLYWAY_ENABLED: true
+      SPRING_FLYWAY_DEFAULT_SCHEMA: ai_service
+      SPRING_FLYWAY_SCHEMAS: ai_service
+    env_file:
+      - .env
+    ports:
+      - "8085:8085"
+
+  gmail-service:
+    build: ./gmail-service
+    depends_on:
+      - postgres
+      - user-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/communication_platform
+      SPRING_DATASOURCE_USERNAME: app_user
+      SPRING_DATASOURCE_PASSWORD: ${APP_DB_PASSWORD}
+      SPRING_FLYWAY_ENABLED: true
+      SPRING_FLYWAY_DEFAULT_SCHEMA: gmail_service
+      SPRING_FLYWAY_SCHEMAS: gmail_service
+    env_file:
+      - .env
+    ports:
+      - "8086:8086"
+
+  whatsapp-service:
+    build: ./whatsapp-service
+    depends_on:
+      - postgres
+      - user-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/communication_platform
+      SPRING_DATASOURCE_USERNAME: app_user
+      SPRING_DATASOURCE_PASSWORD: ${APP_DB_PASSWORD}
+      SPRING_FLYWAY_ENABLED: true
+      SPRING_FLYWAY_DEFAULT_SCHEMA: whatsapp_service
+      SPRING_FLYWAY_SCHEMAS: whatsapp_service
+    env_file:
+      - .env
+    ports:
+      - "8087:8087"
+
+volumes:
+  communication_pgdata_1:
+  telegram_tdlib_data:
