@@ -10,6 +10,10 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
+/**
+ * Mapper for {@link User}
+ * @since 11.2025
+ */
 @Mapper
 public abstract class UserMapper {
 

@@ -6,6 +6,7 @@ import com.sdc.user.domain.dto.UserCreateDto;
 import com.sdc.user.domain.dto.UserDto;
 import com.sdc.user.domain.dto.UserPatchDto;
 import com.sdc.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ import java.util.Map;
 public class UserController {
     private final UserService service;
 
+    @Operation(summary = "Register")
     @PostMapping("/auth/register")
     public UserDto register(
             @RequestBody
@@ -45,6 +47,7 @@ public class UserController {
         return result;
     }
 
+    @Operation(summary = "Login")
     @PostMapping("auth/login")
     public Map<String, String> login(
             @RequestBody
@@ -57,6 +60,7 @@ public class UserController {
         return result;
     }
 
+    @Operation(summary = "Refresh token")
     @PostMapping("auth/refresh")
     public Map<String, String> refresh(
             @RequestParam
@@ -68,6 +72,7 @@ public class UserController {
         return result;
     }
 
+    @Operation(summary = "Create user")
     @PostMapping("/admin/create-user")
     public UserDto createUserByAdmin(
             @RequestBody
@@ -82,6 +87,7 @@ public class UserController {
         return result;
     }
 
+    @Operation(summary = "Patch user")
     @PatchMapping("/{id}")
     public UserDto patchUser(
             @PathVariable
@@ -96,6 +102,7 @@ public class UserController {
         return result;
     }
 
+    @Operation(summary = "Get self iformation")
     @GetMapping("/me")
     public UserDto getMe() {
         log.info("Received request GET users/me");
@@ -104,7 +111,7 @@ public class UserController {
         return result;
     }
 
-    //todo debug method, delete if not used in future
+    @Operation(summary = "Get all users")
     @GetMapping
     public List<UserDto> findAll() {
         return service.findAll();

@@ -38,6 +38,11 @@ public class UserService {
     private final JwtTokenProvider tokenProvider;
     private final AuthService authService;
 
+    /**
+     * Register user.
+     * @param createDto dto to create user.
+     * @return UserDto with user data.
+     */
     public UserDto register(final UserCreateDto createDto) {
         final User user = mapper.fromCreateDto(createDto);
         if (userRepository.existsByEmail(user.getEmail()) || userRepository.existsByUsername(user.getUsername())) {
@@ -50,6 +55,12 @@ public class UserService {
         return mapper.toDto(userRepository.save(user));
     }
 
+    /**
+     * Create user.
+     * @param createDto dto to create user.
+     * @param role created user role.
+     * @return UserDto with user data.
+     */
     @PreAuthorize("hasRole('ADMIN')")
     public UserDto createByAdmin(final UserCreateDto createDto, final RoleType role) {
         final User user = mapper.fromCreateDto(createDto);
@@ -63,6 +74,11 @@ public class UserService {
         return mapper.toDto(userRepository.save(user));
     }
 
+    /**
+     * Login
+     * @param authRequestDto dto with auth request data.
+     * @return Map with access and refresh tokens.
+     */
     public Map<String, String> login(final AuthRequestDto authRequestDto) {
         final User user = userRepository.findByUsername(authRequestDto.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -81,6 +97,11 @@ public class UserService {
         return tokens;
     }
 
+    /**
+     * Refresh token
+     * @param refreshToken refresh token.
+     * @return Map with access and refresh tokens.
+     */
     public Map<String, String> refresh(final String refreshToken) {
         final Long userId = tokenProvider.parseRefreshToken(refreshToken);
 
@@ -97,6 +118,11 @@ public class UserService {
         return tokens;
     }
 
+    /**
+     * Find all users.
+     * @return UserDto list with all users.
+     */
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UserDto> findAll() {
         return userRepository.findAll()
                 .stream()
@@ -104,6 +130,12 @@ public class UserService {
                 .toList();
     }
 
+    /**
+     * Patch user.
+     * @param id target user id.
+     * @param patchDto dto with patch data.
+     * @return UserDto with user data.
+     */
     @Transactional
     public UserDto patch(final Long id, final UserPatchDto patchDto) {
         final User user = userRepository.findById(id)
@@ -122,6 +154,11 @@ public class UserService {
         return mapper.toDto(user);
     }
 
+    /**
+     * Validate patch changes
+     * @param beforeUpdate entity before update.
+     * @param afterUpdate entity after update.
+     */
     private void validateChanges(final UserPatchDto beforeUpdate, final UserPatchDto afterUpdate) {
         if (!Objects.equals(beforeUpdate.getEmail(), afterUpdate.getEmail())) {
             if (userRepository.existsByEmail(afterUpdate.getEmail())) {
@@ -140,6 +177,10 @@ public class UserService {
         }
     }
 
+    /**
+     * Get user self data.
+     * @return UserDto with user data.
+     */
     public UserDto getMe() {
         final User user = userRepository.getById(authService.getCurrentUserId());
         return mapper.toDto(user);

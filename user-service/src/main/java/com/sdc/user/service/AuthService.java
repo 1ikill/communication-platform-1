@@ -19,6 +19,7 @@ public class AuthService {
 
     /**
      * Get the current user's role from JWT in Authorization header.
+     * @return RoleType.
      */
     public RoleType getCurrentUserRole() {
         final String header = request.getHeader("Authorization");
@@ -36,6 +37,10 @@ public class AuthService {
         return RoleType.valueOf(role);
     }
 
+    /**
+     * Get current user id.
+     * @return Long user id.
+     */
     public Long getCurrentUserId() {
         final String header = request.getHeader("Authorization");
         if (!StringUtils.hasText(header) || !header.startsWith("Bearer ")) {
