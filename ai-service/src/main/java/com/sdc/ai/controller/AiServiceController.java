@@ -30,11 +30,6 @@ public class AiServiceController {
     private final AIMessageFormattingService messageFormattingService;
     private final ContactProfileService profileService;
 
-    /**
-     * Method for contact profile creation.
-     * @param createDto - dto for creation of contact profile.
-     * @return ContactProfileDto with created contact profile data.
-     */
     @Operation(description = "Creation of contact profile")
     @PostMapping("profiles/add")
     public ContactProfileDto addProfile(
@@ -47,12 +42,6 @@ public class AiServiceController {
         return result;
     }
 
-    /**
-     * Method for contact profile patching.
-     * @param id contact profile identifier.
-     * @param patch ContactProfilePatchDto with patch fields.
-     * @return ContactProfileDto with updated contact profile data.
-     */
     @Operation(description = "Patching of contact profile")
     @PatchMapping("profiles/{id}")
     public ContactProfileDto patchProfile(
@@ -67,13 +56,6 @@ public class AiServiceController {
         return result;
     }
 
-    /**
-     * Method for personalization of generic user message by contact profile.
-     * @param platform communication platform.
-     * @param chatIdentifier chat identifier.
-     * @param message user's generic message to personalize.
-     * @return String personalized message.
-     */
     @Operation(description = "Message ai-personalization")
     @PostMapping("/format-message")
     public String formatMessage(

@@ -34,6 +34,7 @@ public class AIMessageFormattingService {
                 Your task:
                     - Transform a generic message from <USER_PROMPT> into a personalized message tailored to a specific recipient using the provided recipient_profile.
                     - ONLY use the information present in the profile and the user’s input message for customization.
+                    = Use the same language as in message text.
                     - If any profile field is missing gracefully ignore it.
            
                 POLICY:
