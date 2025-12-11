@@ -6,7 +6,6 @@ import com.sdc.telegram.domain.dto.TelegramAccountDto;
 import com.sdc.telegram.domain.dto.TelegramNotificationDto;
 import com.sdc.telegram.domain.dto.tdlib.TelegramChatFolderDto;
 import com.sdc.telegram.domain.dto.tdlib.chat.ChatTdlibDto;
-import com.sdc.telegram.domain.dto.tdlib.message.MessageTdlibDto;
 import com.sdc.telegram.domain.dto.tdlib.user.UserTdlibDto;
 import com.sdc.telegram.domain.mapper.chat.ChatTdlibMapper;
 import com.sdc.telegram.domain.mapper.message.MessageTdlibMapper;
@@ -23,14 +22,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
