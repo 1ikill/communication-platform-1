@@ -119,6 +119,23 @@ services:
     ports:
       - "8087:8087"
 
+  discord-service:
+    build: ./discord-service
+    depends_on:
+      - postgres
+      - user-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/communication_platform
+      SPRING_DATASOURCE_USERNAME: app_user
+      SPRING_DATASOURCE_PASSWORD: ${APP_DB_PASSWORD}
+      SPRING_FLYWAY_ENABLED: true
+      SPRING_FLYWAY_DEFAULT_SCHEMA: discord_service
+      SPRING_FLYWAY_SCHEMAS: discord_service
+    env_file:
+      - .env
+    ports:
+      - "8088:8088"
+
 volumes:
   communication_pgdata_1:
   telegram_tdlib_data:

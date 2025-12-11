@@ -22,6 +22,7 @@ CREATE SCHEMA IF NOT EXISTS telegram_service AUTHORIZATION app_admin;
 CREATE SCHEMA IF NOT EXISTS gmail_service AUTHORIZATION app_admin;
 CREATE SCHEMA IF NOT EXISTS whatsapp_service AUTHORIZATION app_admin;
 CREATE SCHEMA IF NOT EXISTS ai_service AUTHORIZATION app_admin;
+CREATE SCHEMA IF NOT EXISTS discord_service AUTHORIZATION app_admin;
 
 -- 6. Grant CREATE privilege to app_write role on all schemas
 -- This allows Flyway (running as app_user with app_write role) to create tables
@@ -30,6 +31,7 @@ GRANT CREATE ON SCHEMA telegram_service TO app_write;
 GRANT CREATE ON SCHEMA gmail_service TO app_write;
 GRANT CREATE ON SCHEMA whatsapp_service TO app_write;
 GRANT CREATE ON SCHEMA ai_service TO app_write;
+GRANT CREATE ON SCHEMA discord_service TO app_write;
 
 -- 7. Also grant USAGE (already included in CREATE, but explicit is good)
 GRANT USAGE ON SCHEMA user_service TO app_read, app_write;
@@ -37,6 +39,7 @@ GRANT USAGE ON SCHEMA telegram_service TO app_read, app_write;
 GRANT USAGE ON SCHEMA gmail_service TO app_read, app_write;
 GRANT USAGE ON SCHEMA whatsapp_service TO app_read, app_write;
 GRANT USAGE ON SCHEMA ai_service TO app_read, app_write;
+GRANT USAGE ON SCHEMA discord_service TO app_read, app_write;
 
 -- 8. Set default privileges for each schema
 -- This ensures FUTURE tables created by app_admin get proper permissions
@@ -88,6 +91,16 @@ ALTER DEFAULT PRIVILEGES FOR ROLE app_admin IN SCHEMA ai_service
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app_write;
 
 ALTER DEFAULT PRIVILEGES FOR ROLE app_admin IN SCHEMA ai_service 
+GRANT USAGE, SELECT ON SEQUENCES TO app_write;
+
+-- discord_service
+ALTER DEFAULT PRIVILEGES FOR ROLE app_admin IN SCHEMA discord_service
+GRANT SELECT ON TABLES TO app_read;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE app_admin IN SCHEMA discord_service 
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app_write;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE app_admin IN SCHEMA discord_service 
 GRANT USAGE, SELECT ON SEQUENCES TO app_write;
 
 
