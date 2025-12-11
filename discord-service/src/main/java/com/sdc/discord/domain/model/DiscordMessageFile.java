@@ -29,16 +29,31 @@ public class DiscordMessageFile implements Persistable<Long> {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Discord message.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "discord_message_id")
     private DiscordPrivateMessage discordMessage;
 
+    /**
+     * File name.
+     */
     private String fileName;
 
+    /**
+     * File type.
+     */
     private String fileType;
 
+    /**
+     * Discord url.
+     */
     private String discordUrl;
 
+    /**
+     * Created date.
+     */
     @CreationTimestamp
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private LocalDateTime createdDate;

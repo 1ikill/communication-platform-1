@@ -1,7 +1,7 @@
-package com.sdc.user.config;
+package com.sdc.discord.config;
 
-import com.sdc.user.domain.exception.BadRequestException;
-import com.sdc.user.domain.exception.NotFoundException;
+import com.sdc.discord.domain.exception.BadRequestException;
+import com.sdc.discord.domain.exception.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,7 +50,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             BadRequestException.class,
             IllegalArgumentException.class,
-            RuntimeException.class
+            RuntimeException.class,
+            IOException.class
     })
     public ResponseEntity<?> handleBadRequest(RuntimeException ex) {
 

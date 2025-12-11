@@ -1,4 +1,5 @@
-FROM ubuntu:latest
-LABEL authors="kless"
-
-ENTRYPOINT ["top", "-b"]
+FROM eclipse-temurin:17-jdk
+WORKDIR /app
+COPY target/*.jar app.jar
+EXPOSE 8088
+ENTRYPOINT ["java","-jar","app.jar"]

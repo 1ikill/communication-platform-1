@@ -1,6 +1,6 @@
 package com.sdc.discord.config;
 
-import com.sdc.gmail.utils.CryptoUtils;
+import com.sdc.discord.utils.CryptoUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

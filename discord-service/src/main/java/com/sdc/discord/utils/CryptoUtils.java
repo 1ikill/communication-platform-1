@@ -1,11 +1,17 @@
-package com.sdc.gmail.utils;
+package com.sdc.discord.utils;
 
 import org.springframework.stereotype.Component;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 
@@ -16,6 +22,7 @@ import java.util.Base64;
 @Component
 public class CryptoUtils {
     private static final String ALGO = "AES/GCM/NoPadding";
+    private static final String KEY_ALGO = "AES";
     private static final int TAG_LENGTH = 128; // bits
     private static final int IV_LENGTH = 12;   // bytes
 
@@ -38,19 +45,32 @@ public class CryptoUtils {
      *
      * @param plaintext the text to encrypt
      * @return Base64 encoded ciphertext
-     * @throws Exception
      */
-    public String encrypt(final String plaintext) throws Exception {
-        final Cipher cipher = Cipher.getInstance(ALGO);
+    public String encrypt(final String plaintext) {
+        Cipher cipher;
+        try {
+            cipher = Cipher.getInstance(ALGO);
+        }  catch (NoSuchPaddingException | NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
 
         final byte[] iv = new byte[IV_LENGTH];
         new SecureRandom().nextBytes(iv);
 
         final GCMParameterSpec spec = new GCMParameterSpec(TAG_LENGTH, iv);
-        final SecretKey key = new SecretKeySpec(masterKey, "AES");
+        final SecretKey key = new SecretKeySpec(masterKey, KEY_ALGO);
 
-        cipher.init(Cipher.ENCRYPT_MODE, key, spec);
-        final byte[] encrypted = cipher.doFinal(plaintext.getBytes());
+        try {
+            cipher.init(Cipher.ENCRYPT_MODE, key, spec);
+        } catch (InvalidAlgorithmParameterException | InvalidKeyException e) {
+            throw new RuntimeException(e);
+        }
+        final byte[] encrypted;
+        try {
+            encrypted = cipher.doFinal(plaintext.getBytes());
+        } catch (IllegalBlockSizeException | BadPaddingException e) {
+            throw new RuntimeException(e);
+        }
 
         final byte[] encryptedWithIv = new byte[IV_LENGTH + encrypted.length];
         System.arraycopy(iv, 0, encryptedWithIv, 0, IV_LENGTH);
@@ -64,9 +84,8 @@ public class CryptoUtils {
      *
      * @param ciphertext Base64-encoded encrypted text
      * @return Decrypted plaintext
-     * @throws Exception
      */
-    public String decrypt(final String ciphertext) throws Exception {
+    public String decrypt(final String ciphertext) {
         final byte[] decoded = Base64.getDecoder().decode(ciphertext);
 
         final byte[] iv = new byte[IV_LENGTH];
@@ -75,12 +94,25 @@ public class CryptoUtils {
         System.arraycopy(decoded, 0, iv, 0, IV_LENGTH);
         System.arraycopy(decoded, IV_LENGTH, encrypted, 0, encrypted.length);
 
-        final Cipher cipher = Cipher.getInstance(ALGO);
+        final Cipher cipher;
+        try {
+            cipher = Cipher.getInstance(ALGO);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            throw new RuntimeException(e);
+        }
         final GCMParameterSpec spec = new GCMParameterSpec(TAG_LENGTH, iv);
-        final SecretKey key = new SecretKeySpec(masterKey, "AES");
-        cipher.init(Cipher.DECRYPT_MODE, key, spec);
+        final SecretKey key = new SecretKeySpec(masterKey, KEY_ALGO);
+        try {
+            cipher.init(Cipher.DECRYPT_MODE, key, spec);
+        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
+            throw new RuntimeException(e);
+        }
 
-        return new String(cipher.doFinal(encrypted));
+        try {
+            return new String(cipher.doFinal(encrypted));
+        } catch (IllegalBlockSizeException | BadPaddingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
