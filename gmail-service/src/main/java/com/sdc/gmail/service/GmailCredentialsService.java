@@ -13,6 +13,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.services.oauth2.Oauth2;
 import com.google.api.services.gmail.model.Message;
+import com.sdc.gmail.domain.dto.GmailAccountInfoDto;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.InternetAddress;
 
@@ -61,6 +62,15 @@ public class GmailCredentialsService {
     private final static String ACCOUNT_ID_PARAM = "&accountId=";
     private final static String ACCOUNT_ID = "accountId";
     private final static String EMAIL = "email";
+    private final static String APPLICATION_NAME = "CommunicationPlatform";
+    private final static String TOKEN_SERVER_URL = "https://oauth2.googleapis.com/token";
+    private final static String USER_INFO_URL = "https://openidconnect.googleapis.com/v1/userinfo";
+    private final static String GMAIL_USER_ME = "me";
+    private final static String REDIRECT_URI = "http://localhost:8086/gmail/oauth/google/callback";
+    private final static String SCOPE_DELIMITER = " ";
+    private final static String STATE_DELIMITER = "&";
+    private final static String KEY_VALUE_DELIMITER = "=";
+    private final static int KEY_VALUE_PARTS = 2;
 
     private final static Long MIN_EXPIRES_IN = 60L;
 
@@ -99,10 +109,10 @@ public class GmailCredentialsService {
 
         final GmailCredentials credentials = createCredentials(userId, clientId, clientSecret);
 
-        List<String> scopes = Arrays.asList(SCOPES.split(" "));
-        GoogleAuthorizationCodeRequestUrl url = new GoogleAuthorizationCodeRequestUrl(
+        final List<String> scopes = Arrays.asList(SCOPES.split(SCOPE_DELIMITER));
+        final GoogleAuthorizationCodeRequestUrl url = new GoogleAuthorizationCodeRequestUrl(
                 clientId,
-                getRedirectUri(),
+                REDIRECT_URI,
                 scopes
         )
                 .setAccessType(ACCESS_TYPE_OFFLINE)
@@ -120,7 +130,7 @@ public class GmailCredentialsService {
      * @param state authorization state.
      * @return user's email address.
      */
-    public String handleOAuthCallback(String code, String state) throws Exception {
+    public String handleOAuthCallback(final String code, final String state) throws Exception {
         final Map<String, String> stateMap = parseState(state);
         final Long accountId = Long.parseLong(stateMap.get(ACCOUNT_ID));
 
@@ -143,20 +153,9 @@ public class GmailCredentialsService {
         }
 
         final Credential credential = buildCredential(clientId, clientSecret, transport, jsonFactory);
-
         credential.setFromTokenResponse(tokenResponse);
 
-        final Oauth2 oauth2 = new Oauth2.Builder(transport, jsonFactory, credential)
-                .setApplicationName("CommunicationPlatform")
-                .setHttpRequestInitializer(credential)
-                .build();
-
-        GenericUrl userInfoUrl = new GenericUrl("https://openidconnect.googleapis.com/v1/userinfo");
-        HttpRequest request = transport.createRequestFactory(credential).buildGetRequest(userInfoUrl);
-        String json = request.execute().parseAsString();
-
-        Map<String, Object> userInfo = jsonFactory.fromString(json, Map.class);
-        String email = (String) userInfo.get(EMAIL);
+        final String email = fetchUserEmail(transport, jsonFactory, credential);
 
         account.setEmailAddress(email);
         account.setAccessToken(cryptoUtils.encrypt(accessToken));
@@ -183,6 +182,80 @@ public class GmailCredentialsService {
                           final String subject,
                           final String bodyText) throws Exception {
 
+        final GmailCredentials account = getAndValidateAccount(accountId);
+        final Gmail gmail = buildGmailServiceForAccount(account);
+
+        final Properties props = new Properties();
+        final Session session = Session.getInstance(props, null);
+
+        final MimeMessage email = new MimeMessage(session);
+        email.setFrom(new InternetAddress(account.getEmailAddress()));
+        email.addRecipient(jakarta.mail.Message.RecipientType.TO, new InternetAddress(to));
+        email.setSubject(subject);
+        email.setText(bodyText);
+
+        sendMimeMessage(gmail, email);
+    }
+
+    /**
+     * Method for sending gmail message with file attachment.
+     * @param accountId gmail accountId.
+     * @param to message receiver email address.
+     * @param subject message subject.
+     * @param bodyText message body.
+     * @param file file to attach (image, video, document).
+     */
+    public void sendEmailWithFile(final Long accountId,
+                                   final String to,
+                                   final String subject,
+                                   final String bodyText,
+                                   final MultipartFile file) throws Exception {
+
+        final GmailCredentials account = getAndValidateAccount(accountId);
+        final Gmail gmail = buildGmailServiceForAccount(account);
+
+        final Properties props = new Properties();
+        final Session session = Session.getInstance(props, null);
+
+        final MimeMessage email = new MimeMessage(session);
+        email.setFrom(new InternetAddress(account.getEmailAddress()));
+        email.addRecipient(jakarta.mail.Message.RecipientType.TO, new InternetAddress(to));
+        email.setSubject(subject);
+
+        final jakarta.mail.Multipart multipart = new jakarta.mail.internet.MimeMultipart();
+
+        final jakarta.mail.internet.MimeBodyPart textPart = new jakarta.mail.internet.MimeBodyPart();
+        textPart.setText(bodyText);
+        multipart.addBodyPart(textPart);
+
+        final jakarta.mail.internet.MimeBodyPart attachmentPart = new jakarta.mail.internet.MimeBodyPart();
+        final jakarta.activation.DataSource source = new jakarta.mail.util.ByteArrayDataSource(file.getBytes(), file.getContentType());
+        attachmentPart.setDataHandler(new jakarta.activation.DataHandler(source));
+        attachmentPart.setFileName(file.getOriginalFilename());
+        multipart.addBodyPart(attachmentPart);
+
+        email.setContent(multipart);
+
+        sendMimeMessage(gmail, email);
+    }
+
+    /**
+     * Get connected gmail accounts.
+     * @return GmailAccountIfoDto list.
+     */
+    public List<GmailAccountInfoDto> getMe() {
+        final Long userId = currentUser.getId();
+        return gmailCredentialsRepository.findAllByUserId(userId).stream()
+                .map(cred -> new GmailAccountInfoDto(cred.getId(), cred.getEmailAddress()))
+                .toList();
+    }
+
+    /**
+     * Get and validate Gmail account with token refresh
+     * @param accountId Gmail account ID
+     * @return Validated Gmail credentials
+     */
+    private GmailCredentials getAndValidateAccount(final Long accountId) throws Exception {
         final GmailCredentials account = gmailCredentialsRepository.findById(accountId)
                 .orElseThrow(() -> new RuntimeException("Account not found for id: " + accountId));
 
@@ -195,38 +268,82 @@ public class GmailCredentialsService {
         final JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
 
         final Credential credential = buildCredential(clientId, clientSecret, transport, jsonFactory);
-
         credential.setAccessToken(accessToken);
         credential.setRefreshToken(refreshToken);
         validateTokenExpiry(credential, account);
 
-        final Gmail gmail = new Gmail.Builder(transport, jsonFactory, credential)
-                .setApplicationName("CommunicationPlatform")
-                .build();
-
-        Properties props = new Properties();
-        Session session = Session.getInstance(props, null);
-
-        MimeMessage email = new MimeMessage(session);
-        email.setFrom(new InternetAddress(account.getEmailAddress()));
-        email.addRecipient(jakarta.mail.Message.RecipientType.TO, new InternetAddress(to));
-        email.setSubject(subject);
-        email.setText(bodyText);
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        email.writeTo(baos);
-        String raw = Base64.getUrlEncoder().encodeToString(baos.toByteArray());
-
-        Message message = new Message();
-        message.setRaw(raw);
-
-        gmail.users().messages().send("me", message).execute();
+        return account;
     }
 
+    /**
+     * Build Gmail service instance for account
+     * @param account Gmail credentials
+     * @return Configured Gmail service
+     */
+    private Gmail buildGmailServiceForAccount(final GmailCredentials account) throws Exception {
+        final String accessToken = cryptoUtils.decrypt(account.getAccessToken());
+        final String refreshToken = cryptoUtils.decrypt(account.getRefreshToken());
+        final String clientId = cryptoUtils.decrypt(account.getClientId());
+        final String clientSecret = cryptoUtils.decrypt(account.getClientSecret());
+
+        final HttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
+        final JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+
+        final Credential credential = buildCredential(clientId, clientSecret, transport, jsonFactory);
+        credential.setAccessToken(accessToken);
+        credential.setRefreshToken(refreshToken);
+
+        return new Gmail.Builder(transport, jsonFactory, credential)
+                .setApplicationName(APPLICATION_NAME)
+                .build();
+    }
+
+    /**
+     * Fetch user email from Google OAuth2 API
+     * @param transport HTTP transport
+     * @param jsonFactory JSON factory
+     * @param credential OAuth2 credential
+     * @return User email address
+     */
+    private String fetchUserEmail(final HttpTransport transport, final JsonFactory jsonFactory, final Credential credential) throws Exception {
+        final Oauth2 oauth2 = new Oauth2.Builder(transport, jsonFactory, credential)
+                .setApplicationName(APPLICATION_NAME)
+                .setHttpRequestInitializer(credential)
+                .build();
+
+        final GenericUrl userInfoUrl = new GenericUrl(USER_INFO_URL);
+        final HttpRequest request = transport.createRequestFactory(credential).buildGetRequest(userInfoUrl);
+        final String json = request.execute().parseAsString();
+
+        final Map<String, Object> userInfo = jsonFactory.fromString(json, Map.class);
+        return (String) userInfo.get(EMAIL);
+    }
+
+    /**
+     * Send MIME message via Gmail API
+     * @param gmail Gmail service instance
+     * @param email MIME message to send
+     */
+    private void sendMimeMessage(final Gmail gmail, final MimeMessage email) throws Exception {
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        email.writeTo(baos);
+        final String raw = Base64.getUrlEncoder().encodeToString(baos.toByteArray());
+
+        final Message message = new Message();
+        message.setRaw(raw);
+
+        gmail.users().messages().send(GMAIL_USER_ME, message).execute();
+    }
+
+    /**
+     * Validate token expiry and refresh if needed
+     * @param credential OAuth2 credential
+     * @param account Gmail credentials
+     */
     private void validateTokenExpiry(final Credential credential, final GmailCredentials account) throws Exception {
         final Long expiresIn = credential.getExpiresInSeconds();
         if (expiresIn == null || expiresIn <= MIN_EXPIRES_IN) {
-            boolean refreshed = credential.refreshToken();
+            final boolean refreshed = credential.refreshToken();
             if (refreshed) {
                 account.setAccessToken(cryptoUtils.encrypt(credential.getAccessToken()));
                 account.setTokenExpiry(LocalDateTime.now().plusSeconds(credential.getExpiresInSeconds()));
@@ -237,6 +354,15 @@ public class GmailCredentialsService {
         }
     }
 
+    /**
+     * Get OAuth2 token response from Google
+     * @param clientId OAuth client ID
+     * @param clientSecret OAuth client secret
+     * @param code Authorization code
+     * @param transport HTTP transport
+     * @param jsonFactory JSON factory
+     * @return Token response
+     */
     private GoogleTokenResponse getTokenResponse(final String clientId, final String clientSecret, final String code,
                                                  final HttpTransport transport, final JsonFactory jsonFactory) throws IOException {
         return new GoogleAuthorizationCodeTokenRequest(
@@ -245,32 +371,44 @@ public class GmailCredentialsService {
                 clientId,
                 clientSecret,
                 code,
-                getRedirectUri()
+                REDIRECT_URI
         ).execute();
     }
 
+    /**
+     * Build OAuth2 credential
+     * @param clientId OAuth client ID
+     * @param clientSecret OAuth client secret
+     * @param transport HTTP transport
+     * @param jsonFactory JSON factory
+     * @return Configured credential
+     */
     private Credential buildCredential(final String clientId, final String clientSecret,
                                        final HttpTransport transport, final JsonFactory jsonFactory) {
         return new Credential.Builder(BearerToken.authorizationHeaderAccessMethod())
                 .setTransport(transport)
                 .setJsonFactory(jsonFactory)
                 .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
-                .setTokenServerUrl(new GenericUrl("https://oauth2.googleapis.com/token"))
+                .setTokenServerUrl(new GenericUrl(TOKEN_SERVER_URL))
                 .build();
     }
+
+    /**
+     * Parse state parameter from OAuth callback
+     * @param state State string
+     * @return Parsed state map
+     */
     private Map<String,String> parseState(final String state) {
         final Map<String,String> map = new HashMap<>();
         if (isNull(state)) {
             return map;
         }
-        for (String part : state.split("&")) {
-            String[] kv = part.split("=",2);
-            if (kv.length==2) map.put(kv[0], kv[1]);
+        for (final String part : state.split(STATE_DELIMITER)) {
+            final String[] kv = part.split(KEY_VALUE_DELIMITER, KEY_VALUE_PARTS);
+            if (kv.length == KEY_VALUE_PARTS) {
+                map.put(kv[0], kv[1]);
+            }
         }
         return map;
-    }
-
-    private String getRedirectUri() {
-        return "http://localhost:8086/gmail/oauth/google/callback";
     }
 }

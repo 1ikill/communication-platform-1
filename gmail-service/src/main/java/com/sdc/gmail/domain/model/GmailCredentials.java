@@ -25,7 +25,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Table(name = "gmail_credentials", schema = "gmail_service")
 public class GmailCredentials implements Persistable<Long> {
-
     /**
      * Id.
      */
