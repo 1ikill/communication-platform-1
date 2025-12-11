@@ -13,6 +13,10 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * Service for handling Telegram authentication operations
+ * @since 12.2025
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -20,6 +24,13 @@ public class TelegramAuthService {
     private final TelegramClientManager clientManager;
     private final AuthorizationStateTdlibMapper authorizationStateTdlibMapper;
 
+    /**
+     * Sends a phone number to Telegram for authentication
+     *
+     * @param phone the phone number to send
+     * @param accountId the account identifier
+     * @throws IllegalArgumentException if accountId is invalid
+     */
     public void sendPhoneNumber(final String phone, final String accountId) {
         final Client client = clientManager.getClient(accountId);
         if (Objects.isNull(client)) {
@@ -37,6 +48,12 @@ public class TelegramAuthService {
         });
     }
 
+    /**
+     * Sends the authentication code received from Telegram
+     *
+     * @param code the authentication code
+     * @param accountId the account identifier
+     */
     public void sendAuthCode(final String code, final String accountId) {
         Client client = clientManager.getClient(accountId);
         TdApi.GetAuthorizationState getAuthorizationState = new TdApi.GetAuthorizationState();
@@ -51,6 +68,12 @@ public class TelegramAuthService {
         });
     }
 
+    /**
+     * Sends the password for two-factor authentication
+     *
+     * @param password the account password
+     * @param accountId the account identifier
+     */
     public void sendPassword(final String password, final String accountId) {
         Client client = clientManager.getClient(accountId);
         TdApi.GetAuthorizationState getAuthorizationState = new TdApi.GetAuthorizationState();
@@ -65,6 +88,12 @@ public class TelegramAuthService {
         });
     }
 
+    /**
+     * Logs out the specified Telegram account
+     *
+     * @param accountId the account identifier
+     * @throws IllegalArgumentException if accountId is invalid
+     */
     public void logout(final String accountId) {
         Client client = clientManager.getClient(accountId);
         if (Objects.isNull(client)) {
@@ -80,6 +109,14 @@ public class TelegramAuthService {
         });
     }
 
+    /**
+     * Retrieves the current authorization state for the specified account
+     *
+     * @param accountId the account identifier
+     * @return the authorization state
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     public AuthorizationStateTdlib getAuthorizationState(final String accountId) throws ExecutionException, InterruptedException {
         final Client client = clientManager.getClient(accountId);
         TdApi.GetAuthorizationState getAuthorizationState = new TdApi.GetAuthorizationState();

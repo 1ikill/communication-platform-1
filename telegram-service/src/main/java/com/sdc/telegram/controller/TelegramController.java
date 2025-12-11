@@ -1,5 +1,6 @@
 package com.sdc.telegram.controller;
 
+import com.sdc.telegram.domain.dto.TelegramAccountDto;
 import com.sdc.telegram.domain.dto.TelegramNotificationDto;
 import com.sdc.telegram.domain.dto.tdlib.TelegramChatFolderDto;
 import com.sdc.telegram.domain.dto.tdlib.chat.ChatTdlibDto;
@@ -8,7 +9,6 @@ import com.sdc.telegram.domain.dto.tdlib.user.UserTdlibDto;
 import com.sdc.telegram.service.TelegramFileService;
 import com.sdc.telegram.service.TelegramService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.drinkless.tdlib.TdApi;
@@ -28,6 +28,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * REST controller for managing Telegram operations including chats, messages, and files
+ * @since 12.2025
+ */
 @Slf4j
 @RestController
 @RequestMapping("/telegram")
@@ -36,7 +40,7 @@ public class TelegramController {
     private final TelegramService service;
     private final TelegramFileService fileService;
 
-    @Operation(summary = "Получение списка чатов из основного списка")
+    @Operation(summary = "Get Main chat list chats")
     @GetMapping("/main")
     public List<ChatTdlibDto> findAllChatsMain(
             @RequestParam
@@ -49,7 +53,7 @@ public class TelegramController {
         return chats;
     }
 
-    @Operation(summary = "Получение списка чатов из основного списка")
+    @Operation(summary = "Get all chat folders")
     @GetMapping("/chats/folders")
     public List<TelegramChatFolderDto> findAllChatsFolders(
             @RequestParam
@@ -60,7 +64,7 @@ public class TelegramController {
         return folders;
     }
 
-    @Operation(summary = "Получение списка чатов из основного списка")
+    @Operation(summary = "Find all chats in chat folder")
     @GetMapping("/folder")
     public List<ChatTdlibDto> findAllChatsFolder(
             @RequestParam
@@ -74,7 +78,7 @@ public class TelegramController {
         log.info("Produced response 200 for GET /telegram/folder request with body: {}", chats);
         return chats;
     }
-    @Operation(summary = "Получение списка чатов из архива")
+    @Operation(summary = "Find all chats in archive")
     @GetMapping("/archive")
     public List<ChatTdlibDto> findAllChatsArchive(
             @RequestParam
@@ -87,7 +91,7 @@ public class TelegramController {
         return chats;
     }
 
-    @Operation(summary = "Получение сообщений из чата")
+    @Operation(summary = "Find all messages in chat")
     @GetMapping("/{chatId}/messages")
     public List<MessageTdlibDto> findAllMessages(
             @PathVariable
@@ -102,7 +106,7 @@ public class TelegramController {
         return messages;
     }
 
-    @Operation(summary = "Получение сообщения из чата")
+    @Operation(summary = "Find message in chat")
     @GetMapping("/{chatId}/message")
     public MessageTdlibDto getTelegramMessage(
             @PathVariable
@@ -117,7 +121,7 @@ public class TelegramController {
         return message;
     }
 
-    @Operation(summary = "Получение информации о подключенном аккаунте телеграм")
+    @Operation(summary = "Get connected account info")
     @GetMapping("/account")
     public UserTdlibDto getAccountInfo(@RequestParam final String accountId) throws ExecutionException, InterruptedException {
         log.info("Received request GET /telegram/account with accountId:{}", accountId);
@@ -126,16 +130,16 @@ public class TelegramController {
         return result;
     }
 
-//    @Operation(summary = "Получение списка подключенных акканутов телеграм")
-//    @GetMapping("/accounts")
-//    public List<TelegramAccountDto> getAllAccountsInfo() throws ExecutionException, InterruptedException {
-//        log.info("Received request GET /telegram/accounts");
-//        final List<TelegramAccountDto> result = service.getAllAccountsInfo();
-//        log.info("Produced response 200 for GET /telegram/accounts request with body: {}", result);
-//        return result;
-//    }
+    @Operation(summary = "Get all connected accounts list")
+    @GetMapping("/accounts")
+    public List<TelegramAccountDto> getAllAccountsInfo() throws ExecutionException, InterruptedException {
+        log.info("Received request GET /telegram/accounts");
+        final List<TelegramAccountDto> result = service.getAllAccountsInfo();
+        log.info("Produced response 200 for GET /telegram/accounts request with body: {}", result);
+        return result;
+    }
 
-    @Operation(summary = "Отправление сообщения")
+    @Operation(summary = "Send text message")
     @PostMapping("/text")
     public void sendTextMessage(
             @RequestParam
@@ -149,7 +153,7 @@ public class TelegramController {
         log.info("Produced response 200 for POST /telegram/text request");
     }
 
-    @Operation(summary = "Отправление сообщения")
+    @Operation(summary = "Send image message")
     @PostMapping("/image")
     public void sendImageMessage(
             @RequestParam
@@ -165,7 +169,7 @@ public class TelegramController {
         log.info("Produced response 200 for POST /telegram/image request");
     }
 
-    @Operation(summary = "Смена фото профиля")
+    @Operation(summary = "Change profile photo")
     @PostMapping("/profile/images")
     public void setProfileImage(
             @RequestPart
@@ -178,7 +182,7 @@ public class TelegramController {
         log.info("Produced response 200 for POST /telegram/profile/image request");
     }
 
-    @Operation(summary = "Отправление сообщения")
+    @Operation(summary = "Send video file message")
     @PostMapping("/videos")
     public void sendVideoMessage(
             @RequestParam
@@ -194,7 +198,7 @@ public class TelegramController {
         log.info("Produced response 200 for POST /telegram/video request");
     }
 
-    @Operation(summary = "Отправление документа")
+    @Operation(summary = "Send document message")
     @PostMapping("/documents")
     public void sendDocumentMessage(
             @RequestParam
@@ -210,7 +214,7 @@ public class TelegramController {
         log.info("Produced response 200 for POST /telegram/document request");
     }
 
-    @Operation(summary = "Получение чата с пользователем по имени пользователя")
+    @Operation(summary = "Get user chat-id")
     @GetMapping("/user-chat")
     public Long getUserChatId(
             @RequestParam
@@ -223,7 +227,7 @@ public class TelegramController {
         return userId;
     }
 
-    @Operation(summary = "Создание чата")
+    @Operation(summary = "Create chat with user")
     @PostMapping("/create-chat/{userId}")
     public Long createChat(
             @PathVariable
@@ -236,14 +240,12 @@ public class TelegramController {
         return chatId;
     }
 
-    @Operation(description = "Получение изображения из сообщения")
+    @Operation(description = "Get image")
     @GetMapping(value = "/file/{remoteId}", produces = MediaType.IMAGE_JPEG_VALUE)
     public byte[] getTelegramImage(
             @PathVariable
-            @Parameter(description = "Идентификатор файла")
             final String remoteId,
             @RequestParam
-            @Parameter(description = "Идентфикатор аккаунта")
             final String accountId) throws IOException, ExecutionException, InterruptedException {
         log.info("Received request GET telegram/file/{} with accountId:{}", remoteId, accountId);
         final byte[] result = fileService.getTelegramImage(remoteId, accountId);
@@ -251,14 +253,12 @@ public class TelegramController {
         return result;
     }
 
-    @Operation(description = "Получение видео из сообщения")
+    @Operation(description = "Get video")
     @GetMapping(value = "/video/{remoteId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public StreamingResponseBody getTelegramVideo(
             @PathVariable
-            @Parameter(description = "Идентификатор файла")
             final String remoteId,
             @RequestParam
-            @Parameter(description = "Идентификатор аккаунта")
             final String accountId) throws IOException, ExecutionException, InterruptedException {
 
         log.info("Received request GET telegram/video/{} with accountId:{}", remoteId, accountId);
@@ -267,31 +267,37 @@ public class TelegramController {
         return result;
     }
 
-    @Operation(description = "Создание пустого чата с пользователем")
+    @Operation(description = "Create empty chat")
     @PostMapping("/empty-chats")
-    public void createEmptyChat(@RequestParam final Long chatId, @RequestParam final String accountId) {
+    public void createEmptyChat(
+            @RequestParam
+            final Long chatId,
+            @RequestParam
+            final String accountId) {
         log.info("Received request POST /empty-chats request with chatId:{}, accountId:{}", chatId, accountId);
         service.createEmptyChat(chatId, accountId);
         log.info("Produced response 200 for POST /empty-chats request");
     }
 
-    @Operation(description = "Удаление пустого чата с пользователем")
+    @Operation(description = "Delete empty chat")
     @DeleteMapping("/empty-chats")
-    public void deleteEmptyChat(@RequestParam final Long chatId, @RequestParam final String accountId) {
+    public void deleteEmptyChat(
+            @RequestParam
+            final Long chatId,
+            @RequestParam
+            final String accountId) {
         log.info("Received request DELETE /empty-chats request with chatId:{}, accountId:{}", chatId, accountId);
         service.deleteEmptyChat(chatId, accountId);
         log.info("Produced response 200 for DELETE /empty-chats request");
     }
 
 
-    @Operation(description = "Получение документа из сообщения")
+    @Operation(description = "Get document")
     @GetMapping(value = "/document/{remoteId}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public StreamingResponseBody getTelegramDocument(
             @PathVariable
-            @Parameter(description = "Идентификатор файла")
             final String remoteId,
             @RequestParam
-            @Parameter(description = "Идентификатор аккаунта")
             final String accountId) throws IOException, ExecutionException, InterruptedException {
 
         log.info("Received request GET telegram/document/{} with accountId:{}", remoteId, accountId);
@@ -300,7 +306,7 @@ public class TelegramController {
         return result;
     }
 
-    @Operation(summary = "Получение уведомлений чатов аккаунта")
+    @Operation(summary = "Get chats notifications")
     @GetMapping("/notifications")
     public List<TelegramNotificationDto> findChatsNotifications(@RequestParam final String accountId) throws ExecutionException, InterruptedException {
         log.info("Received request GET /notifications request with accountId:{}", accountId);
@@ -308,17 +314,4 @@ public class TelegramController {
         log.info("Produced response 200 for GET /notifications request with body:{}", result);
         return result;
     }
-
-//    @Operation(summary = "Получение списка чатов из основного списка")
-//    @GetMapping("/user")
-//    public UserTdlibDto findAllChatsFolder(
-//            @RequestParam
-//            final Long userId,
-//            @RequestParam
-//            final String accountId) throws ExecutionException, InterruptedException {
-//        log.info("Received request GET /telegram/user request with userId:{}, accountId:{}", userId, accountId);
-//        final UserTdlibDto user = service.getUser(accountId, userId);
-//        log.info("Produced response 200 for GET /telegram/user request with body: {}", user);
-//        return user;
-//    }
 }

@@ -8,6 +8,10 @@ import lombok.Data;
 
 @Data
 @Schema(description = "User tdlib DTO")
+/**
+ * DTO representing a Telegram user
+ * @since 12.2025
+ */
 public class UserTdlibDto {
     @Schema(description = "Id")
     private Long id;

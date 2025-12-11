@@ -9,6 +9,10 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 @Schema(description = "Profile photo DTO")
+/**
+ * DTO representing a user profile photo
+ * @since 12.2025
+ */
 public class ProfilePhotoDto {
     @Schema(description = "Id")
     private Long id;

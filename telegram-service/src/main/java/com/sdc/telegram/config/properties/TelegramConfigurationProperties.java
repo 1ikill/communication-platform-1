@@ -6,6 +6,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * TDLib configuration properties.
+ * @since 10.2025
+ */
 @Data
 @Valid
 @ConfigurationProperties(prefix = "telegram")

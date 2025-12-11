@@ -21,6 +21,10 @@ import java.util.concurrent.ExecutionException;
 import static com.sdc.telegram.domain.constants.PhotoFileType.PHOTO;
 import static com.sdc.telegram.domain.constants.PhotoFileType.PROFILE;
 
+/**
+ * Service for handling Telegram file operations including images, videos, and documents
+ * @since 12.2025
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -28,16 +32,16 @@ public class TelegramFileService {
     private final TelegramClientManager clientManager;
 
     /**
-     * Метод для получения изображения из чатов телеграм
-     * получает RemoteFile по remoteId, скачивает на время работы метода, парсит скачанный файл в byte[]
-     * @param remoteId идентификатор изображения телеграм
-     * @param accountId индентификатор аккаунта телеграм
-     * @return byte[] изображение
-     * @throws ExecutionException
-     * @throws InterruptedException
-     * @throws IOException
+     * Retrieves an image from Telegram chats
+     * Gets the RemoteFile by remoteId, downloads it temporarily, and converts it to byte array
+     *
+     * @param remoteId the Telegram image identifier
+     * @param accountId the Telegram account identifier
+     * @return byte array of the image
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     * @throws IOException if an I/O error occurs
      */
-    //todo Рефактор сохранения изображения, придумать способ лучше.
     public byte[] getTelegramImage(final String remoteId, final String accountId) throws ExecutionException, InterruptedException, IOException {
         final Client client = clientManager.getClient(accountId);
         CompletableFuture<TdApi.File> future = new CompletableFuture<>();
@@ -73,6 +77,19 @@ public class TelegramFileService {
         return imageBytes;
     }
 
+    /**
+     * Gets the file path by downloading the file if necessary and waiting for download completion
+     *
+     * @param file the Telegram file object
+     * @param client the Telegram client
+     * @param retries the number of retry attempts
+     * @param delayMs the delay in milliseconds between retries
+     * @return the path to the downloaded file
+     * @throws IOException if an I/O error occurs
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     * @throws FileNotFoundException if file is not downloaded after waiting
+     */
     public Path getFilePath(TdApi.File file, final Client client, int retries, int delayMs) throws IOException, ExecutionException, InterruptedException {
         if (file.local.path == null || file.local.path.isEmpty() || !Files.exists(Path.of(file.local.path))) {
             CompletableFuture<TdApi.File> downloadFuture = new CompletableFuture<>();
@@ -113,16 +130,16 @@ public class TelegramFileService {
     }
 
     /**
-     * Метод для получения видео из чатов телеграм
-     * получает RemoteFile по remoteId, скачивает на время работы метода, парсит скачанный файл в StreamingResponseBody
-     * @param remoteId идентификатор видео телеграм
-     * @param accountId индентификатор аккаунта телеграм
-     * @return StreamingResponseBody видео
-     * @throws ExecutionException
-     * @throws InterruptedException
-     * @throws IOException
+     * Retrieves a video from Telegram chats
+     * Gets the RemoteFile by remoteId, downloads it temporarily, and converts it to StreamingResponseBody
+     *
+     * @param remoteId the Telegram video identifier
+     * @param accountId the Telegram account identifier
+     * @return StreamingResponseBody for the video
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     * @throws IOException if an I/O error occurs
      */
-    //todo Рефактор сохранения видео, придумать способ лучше.
     public StreamingResponseBody getTelegramVideo(final String remoteId, final String accountId) throws ExecutionException, InterruptedException, IOException {
         final Client client = clientManager.getClient(accountId);
         CompletableFuture<TdApi.File> future = new CompletableFuture<>();
@@ -157,16 +174,16 @@ public class TelegramFileService {
     }
 
     /**
-     * Метод для получения документов из чатов телеграм
-     * получает RemoteFile по remoteId, скачивает на время работы метода, парсит скачанный файл в StreamingResponseBody
-     * @param remoteId идентификатор документа телеграм
-     * @param accountId индентификатор аккаунта телеграм
-     * @return StreamingResponseBody документа
-     * @throws ExecutionException
-     * @throws InterruptedException
-     * @throws IOException
+     * Retrieves a document from Telegram chats
+     * Gets the RemoteFile by remoteId, downloads it temporarily, and converts it to StreamingResponseBody
+     *
+     * @param remoteId the Telegram document identifier
+     * @param accountId the Telegram account identifier
+     * @return StreamingResponseBody for the document
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     * @throws IOException if an I/O error occurs
      */
-    //todo Рефактор сохранения документа, придумать способ лучше.
     public StreamingResponseBody getTelegramDocument(final String remoteId, final String accountId) throws ExecutionException, InterruptedException, IOException {
         final Client client = clientManager.getClient(accountId);
         CompletableFuture<TdApi.File> future = new CompletableFuture<>();

@@ -5,6 +5,10 @@ import com.sdc.telegram.domain.model.TelegramCredentials;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+/**
+ * MapStruct mapper for converting between TelegramCredentials entity and DTOs
+ * @since 12.2025
+ */
 @Mapper
 public abstract class TelegramCredentialsMapper {
 

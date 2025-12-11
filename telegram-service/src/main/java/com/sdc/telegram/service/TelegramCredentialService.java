@@ -26,6 +26,13 @@ public class TelegramCredentialService {
     private final ResultHandlerImpl resultHandler;
     private final TelegramClientManager clientManager;
 
+    /**
+     * Adds new Telegram credentials for the current user
+     * Creates a new client, initializes it with credentials, and saves to the database
+     *
+     * @param createDto the DTO containing credential information
+     * @throws Exception if encryption or initialization fails
+     */
     public void addCredentials(final TelegramCredentialsCreateDto createDto) throws Exception {
         final TelegramCredentials credentials = mapper.fromCreateDto(createDto);
         credentials.setUserId(currentUser.getId());

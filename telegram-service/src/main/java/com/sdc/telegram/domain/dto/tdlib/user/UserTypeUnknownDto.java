@@ -7,5 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @Schema(description = "User type unknown DTO")
+/**
+ * DTO representing an unknown user type
+ * @since 12.2025
+ */
 public class UserTypeUnknownDto extends UserTypeTdlib {
 }

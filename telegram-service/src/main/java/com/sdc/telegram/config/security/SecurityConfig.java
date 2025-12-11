@@ -7,6 +7,10 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Security configuration.
+ * @since 10.2025
+ */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {

@@ -8,6 +8,10 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * JWT configuration.
+ * @since 10.2025
+ */
 @Configuration
 public class JwtConfig {
 

@@ -4,9 +4,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
+/**
+ * Current user component.
+ * @since 11.2025
+ */
 @Component
 public class CurrentUser {
-
     public Long getId() {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext()
                 .getAuthentication()

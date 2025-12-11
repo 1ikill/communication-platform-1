@@ -5,6 +5,10 @@ import lombok.Data;
 
 @Data
 @Schema(description = "User type bot DTO")
+/**
+ * DTO representing a bot user
+ * @since 12.2025
+ */
 public class UserTypeBotDto extends UserTypeTdlib {
     @Schema(description = "Can be edited")
     private Boolean canBeEdited;

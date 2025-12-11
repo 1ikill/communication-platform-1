@@ -1,7 +1,7 @@
 package com.sdc.telegram.service;
 
 import com.sdc.telegram.config.TelegramClientManager;
-import com.sdc.telegram.config.properties.TelegramConfigurationProperties;
+import com.sdc.telegram.config.security.CurrentUser;
 import com.sdc.telegram.domain.dto.TelegramAccountDto;
 import com.sdc.telegram.domain.dto.TelegramNotificationDto;
 import com.sdc.telegram.domain.dto.tdlib.TelegramChatFolderDto;
@@ -15,13 +15,12 @@ import com.sdc.telegram.domain.dto.tdlib.user.UserTdlibDto;
 import com.sdc.telegram.domain.mapper.chat.ChatTdlibMapper;
 import com.sdc.telegram.domain.mapper.message.MessageTdlibMapper;
 import com.sdc.telegram.domain.mapper.user.UserTdlibMapper;
+import com.sdc.telegram.domain.model.TelegramCredentials;
 import com.sdc.telegram.repository.TelegramCredentialsRepository;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -44,6 +43,10 @@ import java.util.concurrent.Executors;
 import static com.sdc.telegram.domain.constants.PhotoFileType.PHOTO;
 import static com.sdc.telegram.domain.constants.PhotoFileType.PROFILE;
 
+/**
+ * Service for managing Telegram operations including chats, messages, files, and account management
+ * @since 12.2025
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -55,9 +58,19 @@ public class TelegramService {
     private final MessageTdlibMapper messageMapper;
     private final UserTdlibMapper userMapper;
 
-    private final TelegramConfigurationProperties telegramProperties;
+    private final CurrentUser currentUser;
     private final TelegramCredentialsRepository credentialsRepository;
 
+    /**
+     * Retrieves all chats for the specified account with their profile photos
+     *
+     * @param limit the maximum number of chats to retrieve
+     * @param chatList the type of chat list to retrieve
+     * @param accountId the account identifier
+     * @return list of chat DTOs with profile photos
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     public List<ChatTdlibDto> findAllChats(final int limit, final TdApi.ChatList chatList, final String accountId) throws ExecutionException, InterruptedException {
         final Client client = clientManager.getClient(accountId);
         final List<TdApi.Chat> chats = new ArrayList<>();
@@ -103,6 +116,14 @@ public class TelegramService {
         return chatTdlibDtos;
     }
 
+    /**
+     * Retrieves all chat folders for the specified account
+     *
+     * @param accountId the account identifier
+     * @return list of chat folder DTOs
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     public List<TelegramChatFolderDto> getChatFolders(final String accountId) throws ExecutionException, InterruptedException {
         final Client client = clientManager.getClient(accountId);
         reloadClientCache(client);
@@ -144,6 +165,15 @@ public class TelegramService {
         return chatFolders;
     }
 
+    /**
+     * Finds the chat ID for a user by their username
+     *
+     * @param username the Telegram username to search for
+     * @param accountId the account identifier
+     * @return the chat ID associated with the username
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     public Long findUserChatIdByUsername(final String username, final String accountId) throws ExecutionException, InterruptedException {
         final Client client = clientManager.getClient(accountId);
         reloadClientCache(client);
@@ -161,6 +191,16 @@ public class TelegramService {
         return future.get();
     }
 
+    /**
+     * Retrieves a specific message from a chat
+     *
+     * @param messageId the message identifier
+     * @param chatId the chat identifier
+     * @param accountId the account identifier
+     * @return the message DTO with media remote IDs if applicable
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     public MessageTdlibDto getTelegramMessage(final Long messageId, final Long chatId, final String accountId) throws ExecutionException, InterruptedException {
         final Client client = clientManager.getClient(accountId);
         reloadClientCache(client);
@@ -201,6 +241,15 @@ public class TelegramService {
         return result;
     }
 
+    /**
+     * Creates a private chat with a specified user
+     *
+     * @param userId the user identifier to create a chat with
+     * @param accountId the account identifier
+     * @return the chat ID of the created chat
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     public Long createChatWithUser(final Long userId, final String accountId) throws ExecutionException, InterruptedException {
         final Client client = clientManager.getClient(accountId);
         final CompletableFuture<Long> future = new CompletableFuture<>();
@@ -217,6 +266,15 @@ public class TelegramService {
         return future.get();
     }
 
+    /**
+     * Sends a text message to a specified chat
+     *
+     * @param chatId the chat identifier
+     * @param messageText the text content of the message
+     * @param accountId the account identifier
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     public void sendTextMessage(final Long chatId, final String messageText, final String accountId) throws ExecutionException, InterruptedException {
         final Client client = clientManager.getClient(accountId);
         final TdApi.SendMessage sendMessage = new TdApi.SendMessage();
@@ -240,7 +298,16 @@ public class TelegramService {
         });
     }
 
-
+    /**
+     * Retrieves all messages from a specified chat with read status information
+     *
+     * @param chatId the chat identifier
+     * @param limit the maximum number of messages to retrieve per batch
+     * @param accountId the account identifier
+     * @return list of message DTOs with media remote IDs and read status
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     public List<MessageTdlibDto> findAllMessages(final Long chatId, final int limit, final String accountId) throws ExecutionException, InterruptedException {
         final Client client = clientManager.getClient(accountId);
         final List<TdApi.Message> allMessages = new ArrayList<>();
@@ -290,6 +357,15 @@ public class TelegramService {
         return dtos;
     }
 
+    /**
+     * Sets the read status for outgoing messages in the message list
+     *
+     * @param dtos the list of message DTOs to update
+     * @param chatId the chat identifier
+     * @param client the Telegram client
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     private void setReadStatusOutbox(final List<MessageTdlibDto> dtos, final Long chatId, final Client client) throws ExecutionException, InterruptedException {
         final TdApi.Chat chat = fetchChatDetailsAsync(chatId, client).get();
 
@@ -316,6 +392,14 @@ public class TelegramService {
                 .forEach(dto -> dto.setIsRead(dto.getDate() <= lastReadDate));
     }
 
+    /**
+     * Fetches and sets profile photo URLs for all chats in the list
+     *
+     * @param chats the list of chat DTOs to update
+     * @param accountId the account identifier
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     private void getProfilePhotos(final List<ChatTdlibDto> chats, final String accountId) throws ExecutionException, InterruptedException {
         final Client client = clientManager.getClient(accountId);
         for (ChatTdlibDto chat : chats) {
@@ -402,6 +486,12 @@ public class TelegramService {
         }
     }
 
+    /**
+     * Sets the profile photo for the specified account
+     *
+     * @param file the image file to set as profile photo
+     * @param accountId the account identifier
+     */
     public void setProfilePhoto(final MultipartFile file, final String accountId) {
         final Client client = clientManager.getClient(accountId);
 
@@ -432,6 +522,14 @@ public class TelegramService {
         });
     }
 
+    /**
+     * Sends an image message to a specified chat with optional caption
+     *
+     * @param chatId the chat identifier
+     * @param file the image file to send
+     * @param message the caption text for the image
+     * @param accountId the account identifier
+     */
     public void sendImageMessage(final Long chatId, final MultipartFile file, final String message, final String accountId) {
         final Client client = clientManager.getClient(accountId);
         final TdApi.SendMessage sendMessage = new TdApi.SendMessage();
@@ -471,6 +569,14 @@ public class TelegramService {
         });
     }
 
+    /**
+     * Sends a video message to a specified chat with optional caption
+     *
+     * @param chatId the chat identifier
+     * @param file the video file to send
+     * @param message the caption text for the video
+     * @param accountId the account identifier
+     */
     public void sendVideoMessage(final Long chatId, final MultipartFile file, final String message, final String accountId) {
         final Client client = clientManager.getClient(accountId);
 
@@ -504,6 +610,13 @@ public class TelegramService {
 
     }
 
+    /**
+     * Polls the upload status of a file and deletes temporary file when completed
+     *
+     * @param client the Telegram client
+     * @param fileId the file identifier
+     * @param tempFile the temporary file to delete after upload
+     */
     private void pollUntilUploaded(final Client client, final int fileId, File tempFile) {
         Executors.newSingleThreadExecutor().submit(() -> {
             try {
@@ -538,6 +651,12 @@ public class TelegramService {
         });
     }
 
+    /**
+     * Resizes an image if it exceeds the maximum dimension limit
+     *
+     * @param image the image to resize
+     * @return the resized image or the original if no resizing is needed
+     */
     private BufferedImage resizeIfTooLarge(final BufferedImage image) {
         final int maxDimension = 5000;
         final int width = image.getWidth();
@@ -560,6 +679,12 @@ public class TelegramService {
         return resized;
     }
 
+    /**
+     * Determines the image format from the filename
+     *
+     * @param filename the name of the image file
+     * @return the image format (png, bmp, gif, or jpg as default)
+     */
     private String getImageFormat(final String filename) {
         if (filename == null) return "jpg";
         final String lower = filename.toLowerCase();
@@ -572,6 +697,14 @@ public class TelegramService {
         };
     }
 
+    /**
+     * Sends a document message to a specified chat with optional caption
+     *
+     * @param chatId the chat identifier
+     * @param file the document file to send
+     * @param message the caption text for the document
+     * @param accountId the account identifier
+     */
     public void sendDocumentMessage(final Long chatId, final MultipartFile file, final String message, final String accountId) {
         final Client client = clientManager.getClient(accountId);
 
@@ -607,6 +740,14 @@ public class TelegramService {
 
     }
 
+    /**
+     * Retrieves notification information for all chats in the main list
+     *
+     * @param accountId the account identifier
+     * @return list of notification DTOs containing unread counts
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     public List<TelegramNotificationDto> findChatsNotifications(final String accountId) throws ExecutionException, InterruptedException {
         final Client client = clientManager.getClient(accountId);
         final List<TelegramNotificationDto> chatNotificationDtos = new ArrayList<>();
@@ -652,6 +793,14 @@ public class TelegramService {
         return chatNotificationDtos;
     }
 
+    /**
+     * Retrieves account information for the specified account
+     *
+     * @param accountId the account identifier
+     * @return user DTO with account information
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     public UserTdlibDto getAccountInfo(final String accountId) throws ExecutionException, InterruptedException {
         final Client client = clientManager.getClient(accountId);
         CompletableFuture<TdApi.User> future = new CompletableFuture<>();
@@ -667,46 +816,70 @@ public class TelegramService {
         return userMapper.toDto(future.get(), accountId);
     }
 
-//    public List<TelegramAccountDto> getAllAccountsInfo() throws ExecutionException, InterruptedException {
-//        final @NotNull List<TelegramConfigurationProperties.TelegramAccountProperties> accountProperties = telegramProperties.getClients();
-//        final List<TelegramAccountDto> accounts = new ArrayList<>();
-//        for (TelegramConfigurationProperties.TelegramAccountProperties accountProperty : accountProperties) {
-//            if (!isAuthorized(accountProperty.getAccountId())){
-//                continue;
-//            }
-//            final UserTdlibDto user = getAccountInfo(accountProperty.getAccountId());
-//            String remote = null;
-//            if (Objects.nonNull(user.getProfilePhoto()) && Objects.nonNull(user.getProfilePhoto().getBig())){
-//                remote = (PROFILE.getTitle() + user.getProfilePhoto().getBig().getRemote().getId());
-//            }
-//            accounts.add(new TelegramAccountDto(accountProperty.getAccountId(), accountProperty.getAccountName(), remote));
-//        }
-//
-//        return accounts;
-//    }
+    /**
+     * Retrieves information for all authorized accounts belonging to the current user
+     *
+     * @return list of account DTOs with profile photos
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
+    public List<TelegramAccountDto> getAllAccountsInfo() throws ExecutionException, InterruptedException {
+        final List<TelegramCredentials> accounts = credentialsRepository.findAllByUserId(currentUser.getId());
 
+        final List<TelegramAccountDto> accountsInfo = new ArrayList<>();
+        for (TelegramCredentials account : accounts) {
+            if (!isAuthorized(account.getAccountId())){
+                continue;
+            }
+            final UserTdlibDto user = getAccountInfo(account.getAccountId());
+            String remote = null;
+            if (Objects.nonNull(user.getProfilePhoto()) && Objects.nonNull(user.getProfilePhoto().getBig())){
+                remote = (PROFILE.getTitle() + user.getProfilePhoto().getBig().getRemote().getId());
+            }
+            accountsInfo.add(new TelegramAccountDto(account.getAccountId(), account.getAccountName(), remote));
+        }
 
-//    private boolean isAuthorized(final String accountId) {
-//        Client client = clientManager.getClient(accountId);
-//        if (client == null) return false;
-//
-//        CompletableFuture<TdApi.AuthorizationState> future = new CompletableFuture<>();
-//        client.send(new TdApi.GetAuthorizationState(), response -> {
-//            if (response instanceof TdApi.AuthorizationState) {
-//                future.complete((TdApi.AuthorizationState) response);
-//            } else {
-//                future.completeExceptionally(new RuntimeException("Unexpected response"));
-//            }
-//        });
-//
-//        try {
-//            TdApi.AuthorizationState state = future.get();
-//            return state instanceof TdApi.AuthorizationStateReady;
-//        } catch (Exception e) {
-//            return false;
-//        }
-//    }
+        return accountsInfo;
+    }
 
+    /**
+     * Checks if an account is authorized and ready
+     *
+     * @param accountId the account identifier
+     * @return true if the account is authorized, false otherwise
+     */
+    private boolean isAuthorized(final String accountId) {
+        Client client = clientManager.getClient(accountId);
+        if (client == null) return false;
+
+        CompletableFuture<TdApi.AuthorizationState> future = new CompletableFuture<>();
+        client.send(new TdApi.GetAuthorizationState(), response -> {
+            if (response instanceof TdApi.AuthorizationState) {
+                future.complete((TdApi.AuthorizationState) response);
+            } else {
+                future.completeExceptionally(new RuntimeException("Unexpected response"));
+            }
+        });
+
+        try {
+            TdApi.AuthorizationState state = future.get();
+            return state instanceof TdApi.AuthorizationStateReady;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Fetches a batch of messages from a chat
+     *
+     * @param chatId the chat identifier
+     * @param fromMessageId the message ID to start from
+     * @param limit the maximum number of messages to fetch
+     * @param client the Telegram client
+     * @return list of messages
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     private List<TdApi.Message> fetchMessageBatch(final Long chatId, final Long fromMessageId, final int limit, final Client client) throws ExecutionException, InterruptedException {
         final CompletableFuture<List<TdApi.Message>> future = new CompletableFuture<>();
         final TdApi.GetChatHistory getChatHistory = createGetChatHistoryRequest(chatId, fromMessageId, limit);
@@ -724,6 +897,14 @@ public class TelegramService {
         return future.get();
     }
 
+    /**
+     * Creates a request object for fetching chat history
+     *
+     * @param chatId the chat identifier
+     * @param fromMessageId the message ID to start from
+     * @param limit the maximum number of messages to fetch
+     * @return the GetChatHistory request
+     */
     private TdApi.GetChatHistory createGetChatHistoryRequest(final Long chatId, final Long fromMessageId, final int limit){
         final TdApi.GetChatHistory getChatHistory = new TdApi.GetChatHistory();
         getChatHistory.chatId = chatId;
@@ -734,6 +915,13 @@ public class TelegramService {
         return getChatHistory;
     }
 
+    /**
+     * Converts a multipart file to a temporary file
+     *
+     * @param multipartFile the multipart file to convert
+     * @return the temporary file
+     * @throws IOException if an I/O error occurs
+     */
     private File convertMultipartFileToFile(final MultipartFile multipartFile) throws IOException {
         final File tempFile = File.createTempFile("upload", multipartFile.getOriginalFilename());
         try (FileOutputStream stream = new FileOutputStream(tempFile)) {
@@ -742,6 +930,13 @@ public class TelegramService {
         return tempFile;
     }
 
+    /**
+     * Marks fetched messages as viewed in the chat
+     *
+     * @param messages the list of messages to mark as viewed
+     * @param chatId the chat identifier
+     * @param client the Telegram client
+     */
     private void readFetchedMessages(final List<TdApi.Message> messages, final Long chatId, final Client client) {
         List<Long> messageIdsToView = messages.stream()
                 .filter(msg -> !msg.isOutgoing)
@@ -761,6 +956,15 @@ public class TelegramService {
         });
     }
 
+    /**
+     * Retrieves user information by user ID
+     *
+     * @param accountId the account identifier
+     * @param userId the user identifier
+     * @return the user DTO
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     private UserTdlibDto getUser(final String accountId, final Long userId) throws ExecutionException, InterruptedException {
         final Client client = clientManager.getClient(accountId);
 
@@ -778,6 +982,13 @@ public class TelegramService {
         return userMapper.toDto(future.get(), accountId);
     }
 
+    /**
+     * Selects the best photo size from available sizes
+     *
+     * @param photoSizes array of available photo sizes
+     * @return the best photo size (medium or big)
+     * @throws RuntimeException if no suitable size is found
+     */
     private TdApi.PhotoSize getPhotoSize(final TdApi.PhotoSize[] photoSizes) {
         TdApi.PhotoSize bestSize = null;
         for (TdApi.PhotoSize size : photoSizes){
@@ -791,6 +1002,14 @@ public class TelegramService {
         }
         return bestSize;
     }
+
+    /**
+     * Fetches chat details asynchronously
+     *
+     * @param chatId the chat identifier
+     * @param client the Telegram client
+     * @return a CompletableFuture containing the chat details
+     */
     private CompletableFuture<TdApi.Chat> fetchChatDetailsAsync(final Long chatId, final Client client) {
         final CompletableFuture<TdApi.Chat> future = new CompletableFuture<>();
 
@@ -806,6 +1025,13 @@ public class TelegramService {
         return future;
     }
 
+    /**
+     * Reloads the client cache by fetching recent chats
+     *
+     * @param client the Telegram client
+     * @throws ExecutionException if the computation threw an exception
+     * @throws InterruptedException if the current thread was interrupted
+     */
     private void reloadClientCache(final Client client) throws ExecutionException, InterruptedException {
         CompletableFuture<TdApi.Chats> chatsFuture = new CompletableFuture<>();
         client.send(new TdApi.GetChats(new TdApi.ChatListMain(), 10), result -> {
@@ -837,6 +1063,12 @@ public class TelegramService {
 
     }
 
+    /**
+     * Deletes the draft message from the specified chat
+     *
+     * @param chatId the chat identifier
+     * @param accountId the account identifier
+     */
     public void deleteEmptyChat(final Long chatId, final String accountId) {
         final Client client = clientManager.getClient(accountId);
         TdApi.SetChatDraftMessage deleteDraft = new TdApi.SetChatDraftMessage(chatId, 0L, null);

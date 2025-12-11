@@ -14,6 +14,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * TDLib client manager.
+ * @since 11.2025
+ */
 @Slf4j
 @Component
 public class TelegramClientManager  {
@@ -34,6 +38,9 @@ public class TelegramClientManager  {
         initializeClients();
     }
 
+    /**
+     * Preload required libraries.
+     */
     private void preloadLibraries() {
         try {
             String os = System.getProperty("os.name");
@@ -48,8 +55,10 @@ public class TelegramClientManager  {
         }
     }
 
-
-    private void initializeClients() throws Exception {
+    /**
+     * Initialize TDLib clients.
+     */
+    private void initializeClients() {
         final List<TelegramCredentials> telegramCredentials = credentialsRepository.findAll();
         if (telegramCredentials.isEmpty()){
             return;
@@ -61,7 +70,7 @@ public class TelegramClientManager  {
             clients.put(telegramCredential.getAccountId(), client);
             clientToAccountMap.put(client, telegramCredential.getAccountId());
             try {
-                Client.execute(new TdApi.SetLogVerbosityLevel(2));//todo
+                Client.execute(new TdApi.SetLogVerbosityLevel(2));
             } catch (Client.ExecutionException e) {
                 throw new RuntimeException("Can't set log verbosity level");
             }
@@ -75,6 +84,11 @@ public class TelegramClientManager  {
         }
     }
 
+    /**
+     * Initialize TDLib client.
+     * @param client client for init.
+     * @param credentials telegram credentials.
+     */
     public void initializeClient(Client client, final TelegramCredentials credentials) throws Exception {
         TdApi.SetTdlibParameters parameters = new TdApi.SetTdlibParameters();
         parameters.apiId = Integer.parseInt(cryptoUtils.decrypt(credentials.getApiId()));

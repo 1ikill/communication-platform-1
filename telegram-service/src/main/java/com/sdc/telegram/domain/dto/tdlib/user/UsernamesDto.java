@@ -9,6 +9,10 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @Schema(description = "Usernames DTO")
+/**
+ * DTO representing user usernames
+ * @since 12.2025
+ */
 public class UsernamesDto {
     @Schema(description = "Active usernames")
     private List<String> activeUsernames;

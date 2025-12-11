@@ -13,7 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.concurrent.ExecutionException;
 
-//TODO docs refactor
+/**
+ * REST controller for handling Telegram authentication operations
+ * @since 12.2025
+ */
 @Slf4j
 @RestController
 @RequestMapping("/auth")
@@ -21,7 +24,7 @@ import java.util.concurrent.ExecutionException;
 public class TelegramAuthController {
     private final TelegramAuthService telegramAuthService;
 
-    @Operation(summary = "Ввод номера для логина в аккаунт телеграм")
+    @Operation(summary = "Phone number submission for account auth")
     @PostMapping("/login/phone")
     public void sendPhoneNumber(
             @RequestParam
@@ -33,7 +36,7 @@ public class TelegramAuthController {
         log.info("Produced response 200 for POST /telegram/login/phone request");
     }
 
-    @Operation(summary = "Ввод кода-подтверждения для логина в аккаунт телеграм")
+    @Operation(summary = "Telegram code submission for account auth")
     @PostMapping("/login/code")
     public void sendAuthCode(
             @RequestParam
@@ -45,7 +48,7 @@ public class TelegramAuthController {
         log.info("Produced response 200 for POST /telegram/login/code request");
     }
 
-    @Operation(summary = "Ввод кода-подтверждения для логина в аккаунт телеграм")
+    @Operation(summary = "Telegram 2Auth password submission for account auth")
     @PostMapping("/login/password")
     public void sendPassword(
             @RequestParam
@@ -57,7 +60,7 @@ public class TelegramAuthController {
         log.info("Produced response 200 for POST /telegram/login/password request");
     }
 
-    @Operation(summary = "Получение состояния авторизации аккаунта")
+    @Operation(summary = "Get account authorization state")
     @GetMapping("/state")
     public AuthorizationStateTdlib getAuthorizationState(@RequestParam final String accountId) throws ExecutionException, InterruptedException {
         log.info("Received request GET /auth/state request with accountId:{}", accountId);
@@ -66,7 +69,7 @@ public class TelegramAuthController {
         return result;
     }
 
-    @Operation(description = "Выход из аккаунта")
+    @Operation(description = "Logout")
     @PostMapping("/logout")
     public void logout(@RequestParam final String accountId) {
         log.info("Received request POST /logout request with accountId:{}", accountId);

@@ -8,6 +8,10 @@ import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
 import org.springframework.stereotype.Component;
 
+/**
+ * Implementation of TDLib result handler for processing Telegram client updates
+ * @since 12.2025
+ */
 @Slf4j
 @Setter
 @Component

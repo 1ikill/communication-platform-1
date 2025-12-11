@@ -18,5 +18,9 @@ import lombok.NoArgsConstructor;
         @JsonSubTypes.Type(value = UserTypeBotDto.class, name = TelegramUserType.BOT_NAME)
 })
 @NoArgsConstructor
-public abstract class UserTypeTdlib {
+public /**
+ * Base class for Telegram user type DTOs
+ * @since 12.2025
+ */
+abstract class UserTypeTdlib {
 }
