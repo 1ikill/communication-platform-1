@@ -103,23 +103,6 @@ services:
     ports:
       - "8086:8086"
 
-  whatsapp-service:
-    build: ./whatsapp-service
-    depends_on:
-      - postgres
-      - user-service
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/communication_platform
-      SPRING_DATASOURCE_USERNAME: app_user
-      SPRING_DATASOURCE_PASSWORD: ${APP_DB_PASSWORD}
-      SPRING_FLYWAY_ENABLED: true
-      SPRING_FLYWAY_DEFAULT_SCHEMA: whatsapp_service
-      SPRING_FLYWAY_SCHEMAS: whatsapp_service
-    env_file:
-      - .env
-    ports:
-      - "8087:8087"
-
   discord-service:
     build: ./discord-service
     depends_on:
