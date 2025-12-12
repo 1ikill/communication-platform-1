@@ -24,7 +24,9 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/gmail/oauth/google/**"
+                                "/gmail/oauth/google/**",
+                                "/actuator/health",
+                                "/actuator/health/**"
                         )
                         .permitAll()
                         .anyRequest().authenticated()

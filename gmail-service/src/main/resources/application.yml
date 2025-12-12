@@ -26,6 +26,16 @@ server:
     mime-types: text/html, text/xml, text/plain, text/css, text/javascript, application/javascript, application/json
     min-response-size: 128
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      base-path: /actuator
+  endpoint:
+    health:
+      enabled: true
+
 credentials:
   secret-key: ${GMAIL_SERVICE_ENCRYPTION_KEY}
 

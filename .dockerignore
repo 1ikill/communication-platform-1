@@ -1,0 +1,7 @@
+.git
+*.log
+target/
+node_modules/
+*.jar
+Dockerfile*
+docker-compose*

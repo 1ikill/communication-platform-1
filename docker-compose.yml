@@ -30,12 +30,21 @@ services:
       - .env
     ports:
       - "8082:8082"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    restart: unless-stopped
 
   main-service:
     build: ./main-service
     depends_on:
       - postgres
       - user-service
+      - gmail-service
+      - discord-service
       - telegram-service
       - ai-service
     environment:
@@ -49,6 +58,13 @@ services:
       - .env
     ports:
       - "8083:8083"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    restart: unless-stopped
 
   telegram-service:
     build: ./telegram-service
@@ -68,6 +84,13 @@ services:
       - "8084:8084"
     volumes:
       - telegram_tdlib_data:/var/lib/tdlib
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    restart: unless-stopped
 
   ai-service:
     build: ./ai-service
@@ -85,6 +108,13 @@ services:
       - .env
     ports:
       - "8085:8085"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    restart: unless-stopped
 
   gmail-service:
     build: ./gmail-service
@@ -102,6 +132,13 @@ services:
       - .env
     ports:
       - "8086:8086"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    restart: unless-stopped
 
   discord-service:
     build: ./discord-service
@@ -119,6 +156,13 @@ services:
       - .env
     ports:
       - "8088:8088"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    restart: unless-stopped
 
 volumes:
   communication_pgdata_1:
