@@ -40,4 +40,4 @@ ALTER TABLE ai_service.contact_profiles
 
 ALTER TABLE ai_service.contact_profiles
     ADD CONSTRAINT chk_platform
-        CHECK (contact_profiles.platform IN ('TELEGRAM','EMAIL','WHATSAPP'));
+        CHECK (contact_profiles.platform IN ('TELEGRAM','EMAIL','DISCORD'));

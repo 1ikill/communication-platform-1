@@ -24,9 +24,9 @@ public enum CommunicationPlatformType {
     VIBER,
 
     /**
-     * WHATSAPP.
+     * DISCORD.
      */
-    WHATSAPP,
+    DISCORD,
 
     /**
      * TEAMS.

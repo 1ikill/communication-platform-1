@@ -72,7 +72,7 @@ public class DiscordMessageService {
 
         targetUser.openPrivateChannel()
                 .flatMap(channel -> channel.sendMessage(message)
-                );
+                ).submit();
     }
 
     /**
@@ -89,7 +89,7 @@ public class DiscordMessageService {
             throw new NotFoundException("Channel is not found");
         }
 
-        channel.sendMessage(text);
+        channel.sendMessage(text).submit();
     }
 
     /**

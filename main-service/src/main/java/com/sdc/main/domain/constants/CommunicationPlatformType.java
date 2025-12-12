@@ -26,9 +26,9 @@ public enum CommunicationPlatformType {
     VIBER,
 
     /**
-     * WHATSAPP
+     * DISCORD
      */
-    WHATSAPP,
+    DISCORD,
 
     /**
      * TEAMS
@@ -38,6 +38,6 @@ public enum CommunicationPlatformType {
     public static final String TELEGRAM_NAME = "TELEGRAM";
     public static final String EMAIL_NAME = "EMAIL";
     public static final String VIBER_NAME = "VIBER";
-    public static final String WHATSAPP_NAME = "WHATSAPP";
+    public static final String DISCORD_NAME = "DISCORD";
     public static final String TEAMS_NAME = "TEAMS";
 }

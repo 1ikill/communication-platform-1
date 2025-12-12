@@ -30,3 +30,7 @@ services:
   gmail-service:
     base-url: ${GMAIL_SERVICE_URL}
     send-text-message-url: ${services.gmail-service.base-url}/send
+  discord-service:
+    base-url: ${DISCORD_SERVICE_URL}
+    send-channel-message-url: /channel/send
+    send-direct-message-url: /dm/send

@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MessageController {
     private final MessageService messageService;
 
-    @Operation(description = "Broadcast messages")
+    @Operation(summary = "Broadcast messages")
     @PostMapping("/broadcast")
     public void sendGroupMessages(
             @RequestBody
@@ -32,7 +32,7 @@ public class MessageController {
         log.info("Produced response 200 for POST /messages/broadcast");
     }
 
-    @Operation(description = "Send telegram message")
+    @Operation(summary = "Send telegram message")
     @PostMapping("/telegram/text")
     public void sendTelegramMessage(
             @RequestParam
@@ -48,7 +48,39 @@ public class MessageController {
         log.info("Produced response 200 for POST /messages/telegram/text");
     }
 
-    @Operation(description = "Send gmail message")
+    @Operation(summary = "Send discord private message")
+    @PostMapping("/discord/private")
+    public void sendDiscordPrivateMessage(
+            @RequestParam
+            final String originalMessage,
+            @RequestParam
+            final String chatId,
+            @RequestParam
+            final Long accountId,
+            @RequestParam
+            final boolean personalize) {
+        log.info("Received request POST /messages/discord/private with originalMessage:{}, chatId:{}, accountId:{}, personalize:{}", originalMessage, chatId, accountId, personalize);
+        messageService.sendDiscordPrivateMessage(originalMessage, chatId, accountId, personalize);
+        log.info("Produced response 200 for POST /messages/discord/private");
+    }
+
+    @Operation(summary = "Send discord channel message")
+    @PostMapping("/discord/channel")
+    public void sendDiscordChannelMessage(
+            @RequestParam
+            final String originalMessage,
+            @RequestParam
+            final String chatId,
+            @RequestParam
+            final Long accountId,
+            @RequestParam
+            final boolean personalize) {
+        log.info("Received request POST /messages/discord/channel with originalMessage:{}, chatId:{}, accountId:{}, personalize:{}", originalMessage, chatId, accountId, personalize);
+        messageService.sendDiscordPrivateMessage(originalMessage, chatId, accountId, personalize);
+        log.info("Produced response 200 for POST /messages/discord/channel");
+    }
+
+    @Operation(summary = "Send gmail message")
     @PostMapping("/gmail/text")
     public void sendGmailMessage(
             @RequestParam

@@ -23,6 +23,7 @@ import lombok.Setter;
         @JsonSubTypes.Type(value = TelegramMessageRequestDto.class, name = CommunicationPlatformType.TELEGRAM_NAME),
         @JsonSubTypes.Type(value = ViberMessageRequestDto.class, name = CommunicationPlatformType.VIBER_NAME),
         @JsonSubTypes.Type(value = GmailMessageRequestDto.class, name = CommunicationPlatformType.EMAIL_NAME),
+        @JsonSubTypes.Type(value = DiscordMessageRequestDto.class, name = CommunicationPlatformType.DISCORD_NAME),
 })
 @NoArgsConstructor
 @Schema(description = "Message Request DTO")

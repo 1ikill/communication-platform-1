@@ -51,7 +51,7 @@ public class AIMessageFormattingService {
                         - Tone style modifies word choice (warm → friendly language, use of mild emoticons allowed, work → neutral, concise).
                         - Formality level rules overall message customization (1 → informal, 5 → very formal).
                     3) Message formatting:
-                        - If the platform is a messenger (e.g. TELEGRAM, VIBER, WHATSAPP etc.) → single line, chat-style messages, no paragraphs.
+                        - If the platform is a messenger (e.g. TELEGRAM, VIBER, DISCORD etc.) → single line, chat-style messages, no paragraphs.
                         - If the platform is EMAIL → default email format with paragraphs.
                     4) Message endings:
                         - If Formality level >=4 use some generic phrases (e.g. Regards, Respectfully) with Full name for signing.

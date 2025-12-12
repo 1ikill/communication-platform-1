@@ -125,7 +125,7 @@ class AIMessageFormattingServiceTest {
 
         // Act
         String result = aiMessageFormattingService.formatMessage(
-            longMessage, CommunicationPlatformType.WHATSAPP, "phone123");
+            longMessage, CommunicationPlatformType.DISCORD, "phone123");
 
         // Assert
         assertEquals(longMessage, result);
@@ -194,7 +194,7 @@ class AIMessageFormattingServiceTest {
 
         CommunicationPlatformType[] platforms = {
             CommunicationPlatformType.TELEGRAM,
-            CommunicationPlatformType.WHATSAPP,
+            CommunicationPlatformType.DISCORD,
             CommunicationPlatformType.VIBER,
             CommunicationPlatformType.EMAIL
         };

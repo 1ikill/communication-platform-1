@@ -1,11 +1,14 @@
 package com.sdc.main.service;
 
+import com.sdc.main.domain.constants.DiscordMessageType;
 import com.sdc.main.domain.dto.request.BroadcastMessageRequestDto;
+import com.sdc.main.domain.dto.request.DiscordMessageRequestDto;
 import com.sdc.main.domain.dto.request.GmailMessageRequestDto;
 import com.sdc.main.domain.dto.request.MessageRequestDto;
 import com.sdc.main.domain.dto.request.TelegramMessageRequestDto;
 import com.sdc.main.domain.mapper.MessageRequestMapper;
 import com.sdc.main.integration.client.AIServiceClient;
+import com.sdc.main.integration.client.DiscordServiceClient;
 import com.sdc.main.integration.client.GmailServiceClient;
 import com.sdc.main.integration.client.TelegramServiceClient;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,7 @@ public class MessageService {
     private final TelegramServiceClient telegramClient;
     private final AIServiceClient aiClient;
     private final GmailServiceClient gmailClient;
+    private final DiscordServiceClient discordClient;
     private final MessageRequestMapper messageRequestMapper;
 
 
@@ -45,9 +49,27 @@ public class MessageService {
                                  final boolean personalize) {
         String message = originalMessage;
         if (personalize) {
-            message = aiClient.customizeMessage(originalMessage, TELEGRAM, chatId.toString());
+            message = aiClient.customizeMessage(originalMessage, TELEGRAM, chatId);
         }
         gmailClient.sendTextMessage(chatId, message, accountId, subject);
+    }
+
+    public void sendDiscordChannelMessage(final String originalMessage, final String chatId, final Long accountId,
+                                 final boolean personalize) {
+        String message = originalMessage;
+        if (personalize) {
+            message = aiClient.customizeMessage(originalMessage, TELEGRAM, chatId);
+        }
+        discordClient.sendChannelMessage(chatId, message, accountId);
+    }
+
+    public void sendDiscordPrivateMessage(final String originalMessage, final String chatId, final Long accountId,
+                                          final boolean personalize) {
+        String message = originalMessage;
+        if (personalize) {
+            message = aiClient.customizeMessage(originalMessage, TELEGRAM, chatId);
+        }
+        discordClient.sendDirectMessage(chatId, message, accountId);
     }
 
     public void broadcastMessages(final BroadcastMessageRequestDto requestDto) {
@@ -71,6 +93,19 @@ public class MessageService {
             telegramClient.sendTextMessage(Long.valueOf(telegramRequest.getChatIdentifier()), telegramRequest.getMessage(), telegramRequest.getAccountId());
         } else if (request instanceof GmailMessageRequestDto gmailRequest) {
             gmailClient.sendTextMessage(gmailRequest.getChatIdentifier(), gmailRequest.getMessage(), gmailRequest.getAccountId(), gmailRequest.getSubject());
+        } else if (request instanceof DiscordMessageRequestDto discordRequest) {
+            switch (discordRequest.getMessageType()) {
+                case CHANNEL :
+                    discordClient.sendChannelMessage(discordRequest.getChatIdentifier(), discordRequest.getMessage(), discordRequest.getAccountId());
+                    break;
+
+                case PRIVATE:
+                    discordClient.sendDirectMessage(discordRequest.getChatIdentifier(), discordRequest.getMessage(), discordRequest.getAccountId());
+                    break;
+
+                default:
+                    throw new RuntimeException("Unknown discord message type");
+            }
         }
     }
 

@@ -28,6 +28,9 @@ public class MicroserviceIntegrationProperties {
     @NotNull
     private GmailService gmailService;
 
+    @NotNull
+    private DiscordService discordService;
+
     @Data
     @Validated
     public static class UserService {
@@ -123,5 +126,19 @@ public class MicroserviceIntegrationProperties {
         @URL
         @NotBlank
         private String sendTextMessageUrl;
+    }
+
+    @Data
+    @Validated
+    public static class DiscordService {
+        @URL
+        @NotBlank
+        private String baseUrl;
+
+        @NotBlank
+        private String sendChannelMessageUrl;
+
+        @NotBlank
+        private String sendDirectMessageUrl;
     }
 }

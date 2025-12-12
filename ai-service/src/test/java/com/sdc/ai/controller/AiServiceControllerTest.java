@@ -148,7 +148,7 @@ class AiServiceControllerTest {
     @Test
     void formatMessage_WithWhatsApp_ShouldReturnFormattedMessage() {
         // Arrange
-        CommunicationPlatformType platform = CommunicationPlatformType.WHATSAPP;
+        CommunicationPlatformType platform = CommunicationPlatformType.DISCORD;
         String chatIdentifier = "+1234567890";
         String message = "Meeting reminder";
         String expected = "Hey! Meeting reminder";
