@@ -1,0 +1,78 @@
+name: Deploy Individual Service
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy'
+        required: true
+        type: choice
+        options:
+          - user-service
+          - telegram-service
+          - ai-service
+          - gmail-service
+          - discord-service
+          - main-service
+      environment:
+        description: 'Environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - development
+
+jobs:
+  deploy-service:
+    name: Deploy ${{ github.event.inputs.service }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+          
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ github.event.inputs.service }}
+          push: true
+          tags: ${{ secrets.ACR_LOGIN_SERVER }}/${{ github.event.inputs.service }}:latest
+          cache-from: type=registry,ref=${{ secrets.ACR_LOGIN_SERVER }}/${{ github.event.inputs.service }}:buildcache
+          cache-to: type=registry,ref=${{ secrets.ACR_LOGIN_SERVER }}/${{ github.event.inputs.service }}:buildcache,mode=max
+          
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Update Container App
+        run: |
+          az containerapp update \
+            --name ${{ github.event.inputs.service }} \
+            --resource-group rg-communication-platform \
+            --image "${{ secrets.ACR_LOGIN_SERVER }}/${{ github.event.inputs.service }}:latest"
+            
+      - name: Verify deployment
+        run: |
+          sleep 20
+          STATUS=$(az containerapp show --name ${{ github.event.inputs.service }} --resource-group rg-communication-platform --query properties.runningStatus -o tsv)
+          echo "Service status: $STATUS"
+          
+          if [ "$STATUS" != "Running" ]; then
+            echo "::error::Service failed to start!"
+            exit 1
+          fi
+          
+          echo "✅ Service deployed successfully!"

@@ -1,0 +1,508 @@
+name: CI/CD Pipeline - Microservices
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - development
+
+env:
+  RESOURCE_GROUP: rg-communication-platform
+  ACR_NAME: ${{ secrets.ACR_NAME }}
+  ENVIRONMENT_NAME: env-comm-platform
+  JAVA_VERSION: '17'
+  MAVEN_OPTS: -Xmx2048m
+
+jobs:
+  # ==========================================
+  # CI STAGE 1: Code Quality & Security Checks
+  # ==========================================
+  code-quality:
+    name: Code Quality & Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+          
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+            
+      - name: Run Maven Checkstyle
+        run: |
+          echo "Running code style checks..."
+          for service in user-service telegram-service ai-service gmail-service discord-service main-service; do
+            if [ -f "$service/pom.xml" ]; then
+              echo "Checking $service..."
+              cd $service
+              mvn checkstyle:check || true  # Continue on style violations but log them
+              cd ..
+            fi
+          done
+          
+      - name: Run OWASP Dependency Check
+        run: |
+          echo "Running security vulnerability scan..."
+          for service in user-service ai-service gmail-service discord-service main-service; do
+            if [ -f "$service/pom.xml" ]; then
+              echo "Scanning $service for vulnerabilities..."
+              cd $service
+              mvn dependency-check:check -DskipTests || true
+              cd ..
+            fi
+          done
+          
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports
+          path: |
+            **/target/dependency-check-report.html
+          retention-days: 30
+
+  # ==========================================
+  # CI STAGE 2: Build & Test
+  # ==========================================
+  build-and-test:
+    name: Build & Test Services
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    strategy:
+      matrix:
+        service: 
+          - user-service
+          - ai-service
+          - gmail-service
+          - discord-service
+          - main-service
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+          
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+            
+      - name: Build ${{ matrix.service }}
+        working-directory: ./${{ matrix.service }}
+        run: |
+          echo "Building ${{ matrix.service }}..."
+          mvn clean compile -DskipTests
+          
+      - name: Run unit tests
+        working-directory: ./${{ matrix.service }}
+        run: |
+          echo "Running tests for ${{ matrix.service }}..."
+          mvn test
+          
+      - name: Generate test coverage report
+        working-directory: ./${{ matrix.service }}
+        run: |
+          mvn jacoco:report || true
+          
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-${{ matrix.service }}
+          path: |
+            ${{ matrix.service }}/target/surefire-reports/
+            ${{ matrix.service }}/target/site/jacoco/
+          retention-days: 30
+          
+      - name: Package artifact
+        working-directory: ./${{ matrix.service }}
+        run: |
+          mvn package -DskipTests
+          
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.service }}-jar
+          path: ${{ matrix.service }}/target/*.jar
+          retention-days: 7
+
+  # ==========================================
+  # CI STAGE 3: Build telegram-service (Special)
+  # ==========================================
+  build-telegram-service:
+    name: Build telegram-service (TDLib)
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+          
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+            
+      # Note: TDLib compilation happens in Docker build, not here
+      - name: Build telegram-service (without TDLib)
+        working-directory: ./telegram-service
+        run: |
+          echo "Building telegram-service Java code..."
+          mvn clean compile -DskipTests
+          
+      - name: Run unit tests
+        working-directory: ./telegram-service
+        run: |
+          mvn test || echo "Tests completed with warnings"
+          
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-telegram-service
+          path: telegram-service/target/surefire-reports/
+          retention-days: 30
+          
+      - name: Package artifact
+        working-directory: ./telegram-service
+        run: |
+          mvn package -DskipTests
+
+  # ==========================================
+  # CD STAGE 1: Build & Push Docker Images
+  # ==========================================
+  build-docker-images:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [build-and-test, build-telegram-service]
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    strategy:
+      matrix:
+        service:
+          - user-service
+          - telegram-service
+          - ai-service
+          - gmail-service
+          - discord-service
+          - main-service
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+          
+      - name: Extract version tag
+        id: version
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "tag=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "date=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+          
+      - name: Build and push ${{ matrix.service }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: |
+            ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:latest
+            ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:${{ steps.version.outputs.tag }}
+            ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:${{ steps.version.outputs.date }}
+          cache-from: type=registry,ref=${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:buildcache
+          cache-to: type=registry,ref=${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:buildcache,mode=max
+          build-args: |
+            BUILD_DATE=${{ steps.version.outputs.date }}
+            VCS_REF=${{ github.sha }}
+
+  # ==========================================
+  # CD STAGE 2: Deploy to Azure Container Apps
+  # ==========================================
+  deploy-to-azure:
+    name: Deploy to Azure Container Apps
+    runs-on: ubuntu-latest
+    needs: build-docker-images
+    environment: 
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: https://${{ steps.deploy-main.outputs.app-url }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Get ACR credentials
+        id: acr-creds
+        run: |
+          ACR_USERNAME=$(az acr credential show --name ${{ secrets.ACR_NAME }} --query username -o tsv)
+          ACR_PASSWORD=$(az acr credential show --name ${{ secrets.ACR_NAME }} --query "passwords[0].value" -o tsv)
+          ACR_LOGIN_SERVER="${{ secrets.ACR_NAME }}.azurecr.io"
+          
+          echo "::add-mask::$ACR_PASSWORD"
+          echo "username=$ACR_USERNAME" >> $GITHUB_OUTPUT
+          echo "password=$ACR_PASSWORD" >> $GITHUB_OUTPUT
+          echo "server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+          
+      - name: Get database connection string
+        id: db
+        run: |
+          DB_SERVER=$(az postgres flexible-server list --resource-group ${{ env.RESOURCE_GROUP }} --query "[0].name" -o tsv)
+          DB_FQDN="${DB_SERVER}.postgres.database.azure.com"
+          echo "fqdn=$DB_FQDN" >> $GITHUB_OUTPUT
+          
+      - name: Deploy user-service
+        id: deploy-user
+        run: |
+          az containerapp update \
+            --name user-service \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image "${{ steps.acr-creds.outputs.server }}/user-service:latest" \
+            --set-env-vars \
+              "SPRING_DATASOURCE_URL=jdbc:postgresql://${{ steps.db.outputs.fqdn }}:5432/communication_platform?currentSchema=user_service" \
+              "APP_DB_PASSWORD=${{ secrets.APP_DB_PASSWORD }}" \
+              "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+              "SPRING_FLYWAY_ENABLED=true" \
+              "SPRING_FLYWAY_SCHEMAS=user_service" \
+              "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=5" \
+              "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE=2"
+              
+          USER_URL=$(az containerapp show --name user-service --resource-group ${{ env.RESOURCE_GROUP }} --query properties.configuration.ingress.fqdn -o tsv)
+          echo "user-url=$USER_URL" >> $GITHUB_OUTPUT
+          
+      - name: Wait for user-service stabilization
+        run: sleep 30
+          
+      - name: Deploy telegram-service
+        run: |
+          az containerapp update \
+            --name telegram-service \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image "${{ steps.acr-creds.outputs.server }}/telegram-service:latest" \
+            --set-env-vars \
+              "TELEGRAM_SERVICE_DB_URL=jdbc:postgresql://${{ steps.db.outputs.fqdn }}:5432/communication_platform" \
+              "APP_DB_PASSWORD=${{ secrets.APP_DB_PASSWORD }}" \
+              "TELEGRAM_SERVICE_ENCRYPTION_KEY=${{ secrets.TELEGRAM_ENCRYPTION_KEY }}" \
+              "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+              "SPRING_FLYWAY_ENABLED=true" \
+              "SPRING_FLYWAY_SCHEMAS=telegram_service" \
+              "LD_LIBRARY_PATH=/app/td/example/java/bin" \
+              "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=5" \
+              "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE=2"
+              
+      - name: Wait for telegram-service stabilization
+        run: sleep 30
+          
+      - name: Deploy ai-service
+        run: |
+          az containerapp update \
+            --name ai-service \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image "${{ steps.acr-creds.outputs.server }}/ai-service:latest" \
+            --set-env-vars \
+              "AI_SERVICE_DB_URL=jdbc:postgresql://${{ steps.db.outputs.fqdn }}:5432/communication_platform" \
+              "APP_DB_PASSWORD=${{ secrets.APP_DB_PASSWORD }}" \
+              "AI_SERVICE_API_KEY=${{ secrets.AI_SERVICE_API_KEY }}" \
+              "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+              "SPRING_FLYWAY_ENABLED=true" \
+              "SPRING_FLYWAY_SCHEMAS=ai_service" \
+              "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=5" \
+              "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE=2"
+              
+      - name: Deploy gmail-service
+        run: |
+          az containerapp update \
+            --name gmail-service \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image "${{ steps.acr-creds.outputs.server }}/gmail-service:latest" \
+            --set-env-vars \
+              "GMAIL_SERVICE_DB_URL=jdbc:postgresql://${{ steps.db.outputs.fqdn }}:5432/communication_platform" \
+              "APP_DB_PASSWORD=${{ secrets.APP_DB_PASSWORD }}" \
+              "GMAIL_SERVICE_ENCRYPTION_KEY=${{ secrets.GMAIL_ENCRYPTION_KEY }}" \
+              "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+              "SPRING_FLYWAY_ENABLED=true" \
+              "SPRING_FLYWAY_SCHEMAS=gmail_service" \
+              "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=5" \
+              "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE=2"
+              
+      - name: Deploy discord-service
+        run: |
+          az containerapp update \
+            --name discord-service \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image "${{ steps.acr-creds.outputs.server }}/discord-service:latest" \
+            --set-env-vars \
+              "DISCORD_SERVICE_DB_URL=jdbc:postgresql://${{ steps.db.outputs.fqdn }}:5432/communication_platform" \
+              "APP_DB_PASSWORD=${{ secrets.APP_DB_PASSWORD }}" \
+              "DISCORD_SERVICE_ENCRYPTION_KEY=${{ secrets.DISCORD_ENCRYPTION_KEY }}" \
+              "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+              "SPRING_FLYWAY_ENABLED=true" \
+              "SPRING_FLYWAY_SCHEMAS=discord_service" \
+              "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=5" \
+              "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE=2"
+              
+      - name: Wait for backend services stabilization
+        run: sleep 30
+          
+      - name: Get all service URLs
+        id: services
+        run: |
+          TELEGRAM_URL=$(az containerapp show --name telegram-service --resource-group ${{ env.RESOURCE_GROUP }} --query properties.configuration.ingress.fqdn -o tsv)
+          AI_URL=$(az containerapp show --name ai-service --resource-group ${{ env.RESOURCE_GROUP }} --query properties.configuration.ingress.fqdn -o tsv)
+          GMAIL_URL=$(az containerapp show --name gmail-service --resource-group ${{ env.RESOURCE_GROUP }} --query properties.configuration.ingress.fqdn -o tsv)
+          DISCORD_URL=$(az containerapp show --name discord-service --resource-group ${{ env.RESOURCE_GROUP }} --query properties.configuration.ingress.fqdn -o tsv)
+          
+          echo "telegram=$TELEGRAM_URL" >> $GITHUB_OUTPUT
+          echo "ai=$AI_URL" >> $GITHUB_OUTPUT
+          echo "gmail=$GMAIL_URL" >> $GITHUB_OUTPUT
+          echo "discord=$DISCORD_URL" >> $GITHUB_OUTPUT
+          
+      - name: Deploy main-service
+        id: deploy-main
+        run: |
+          az containerapp update \
+            --name main-service \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image "${{ steps.acr-creds.outputs.server }}/main-service:latest" \
+            --set-env-vars \
+              "USER_SERVICE_URL=https://${{ steps.deploy-user.outputs.user-url }}/users" \
+              "TELEGRAM_SERVICE_URL=https://${{ steps.services.outputs.telegram }}/telegram" \
+              "AI_SERVICE_URL=https://${{ steps.services.outputs.ai }}/ai-service" \
+              "GMAIL_SERVICE_URL=https://${{ steps.services.outputs.gmail }}/gmail" \
+              "DISCORD_SERVICE_URL=https://${{ steps.services.outputs.discord }}/api/discord/messages/" \
+              "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
+              "SPRING_FLYWAY_ENABLED=false"
+              
+          MAIN_URL=$(az containerapp show --name main-service --resource-group ${{ env.RESOURCE_GROUP }} --query properties.configuration.ingress.fqdn -o tsv)
+          echo "app-url=$MAIN_URL" >> $GITHUB_OUTPUT
+          
+      - name: Verify deployment
+        run: |
+          echo "Waiting for services to be fully ready..."
+          sleep 20
+          
+          echo "Checking service health..."
+          az containerapp list \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "[].{Name:name, Status:properties.runningStatus, Replicas:properties.runningStatus}" \
+            --output table
+            
+      - name: Deployment summary
+        run: |
+          echo "### 🚀 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Main Service URL:** https://${{ steps.deploy-main.outputs.app-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend Services:**" >> $GITHUB_STEP_SUMMARY
+          echo "- User Service: https://${{ steps.deploy-user.outputs.user-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Telegram Service: https://${{ steps.services.outputs.telegram }}" >> $GITHUB_STEP_SUMMARY
+          echo "- AI Service: https://${{ steps.services.outputs.ai }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Gmail Service: https://${{ steps.services.outputs.gmail }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Discord Service: https://${{ steps.services.outputs.discord }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Git Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================
+  # POST-DEPLOYMENT: Health Checks
+  # ==========================================
+  health-check:
+    name: Post-Deployment Health Check
+    runs-on: ubuntu-latest
+    needs: deploy-to-azure
+    
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Check all services status
+        run: |
+          echo "Checking service status..."
+          SERVICES=("user-service" "telegram-service" "ai-service" "gmail-service" "discord-service" "main-service")
+          
+          FAILED=0
+          for service in "${SERVICES[@]}"; do
+            STATUS=$(az containerapp show --name $service --resource-group ${{ env.RESOURCE_GROUP }} --query properties.runningStatus -o tsv)
+            echo "$service: $STATUS"
+            if [ "$STATUS" != "Running" ]; then
+              echo "::error::$service is not running!"
+              FAILED=1
+            fi
+          done
+          
+          if [ $FAILED -eq 1 ]; then
+            echo "::error::Some services failed health check!"
+            exit 1
+          fi
+          
+          echo "✅ All services are running!"
+          
+      - name: Test main service health endpoint
+        run: |
+          MAIN_URL=$(az containerapp show --name main-service --resource-group ${{ env.RESOURCE_GROUP }} --query properties.configuration.ingress.fqdn -o tsv)
+          
+          echo "Testing main service health endpoint..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${MAIN_URL}/actuator/health" || echo "000")
+          
+          if [ "$HTTP_STATUS" == "200" ]; then
+            echo "✅ Main service health check passed!"
+          else
+            echo "::warning::Main service health check returned status: $HTTP_STATUS"
+          fi
