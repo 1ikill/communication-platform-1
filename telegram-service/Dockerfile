@@ -41,11 +41,31 @@ RUN jar cvf tdlib-java-example.jar org
 
 RUN mvn install:install-file -Dfile=tdlib-java-example.jar -DgroupId=com.telegram -DartifactId=tdlib -Dversion=1.8.42 -DgeneratePom=true -Dpackaging=jar
 
-ENV LD_LIBRARY_PATH="/app/td/example/java/bin"
-
-CMD ["tail", "-f", "/dev/null"]
+########################################
+# Build the application
+########################################
+FROM tdlib-builder AS app-builder
 
 WORKDIR /app
-COPY target/*.jar app.jar
+COPY pom.xml .
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+########################################
+# Final runtime image
+########################################
+FROM eclipse-temurin:17-jdk
+
+WORKDIR /app
+
+# Copy TDLib native libraries from tdlib-builder
+COPY --from=tdlib-builder /app/td/example/java/bin/*.so /app/lib/
+COPY --from=tdlib-builder /root/.m2/repository/com/telegram/tdlib/1.8.42/tdlib-1.8.42.jar /app/lib/
+
+# Copy application JAR from app-builder
+COPY --from=app-builder /app/target/*.jar app.jar
+
+ENV LD_LIBRARY_PATH="/app/lib"
+
 EXPOSE 8082
 ENTRYPOINT ["java","-jar","app.jar"]
