@@ -224,6 +224,9 @@ jobs:
           echo "tag=$SHORT_SHA" >> $GITHUB_OUTPUT
           echo "date=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
           
+      - name: Pull existing image for cache
+        run: docker pull ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:latest || true
+          
       - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v5
         with:
