@@ -230,9 +230,9 @@ jobs:
       - name: Build and push ${{ matrix.service }}
         run: |
           docker build \
-            --cache-from ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:latest \
             --build-arg BUILD_DATE=${{ steps.version.outputs.date }} \
             --build-arg VCS_REF=${{ github.sha }} \
+            --build-arg ACR_SERVER=${{ secrets.ACR_LOGIN_SERVER }} \
             -t ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:latest \
             -t ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:${{ steps.version.outputs.tag }} \
             -t ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:${{ steps.version.outputs.date }} \
@@ -318,7 +318,6 @@ jobs:
               "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
               "SPRING_FLYWAY_ENABLED=true" \
               "SPRING_FLYWAY_SCHEMAS=telegram_service" \
-              "LD_LIBRARY_PATH=/app/td/example/java/bin" \
               "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=5" \
               "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE=2"
               
