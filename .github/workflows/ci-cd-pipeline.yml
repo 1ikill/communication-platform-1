@@ -228,18 +228,19 @@ jobs:
         run: docker pull ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:latest || true
           
       - name: Build and push ${{ matrix.service }}
-        uses: docker/build-push-action@v5
-        with:
-          context: ./${{ matrix.service }}
-          push: true
-          tags: |
-            ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:latest
-            ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:${{ steps.version.outputs.tag }}
-            ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:${{ steps.version.outputs.date }}
-          cache-from: type=registry,ref=${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:latest
-          build-args: |
-            BUILD_DATE=${{ steps.version.outputs.date }}
-            VCS_REF=${{ github.sha }}
+        run: |
+          docker build \
+            --cache-from ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:latest \
+            --build-arg BUILD_DATE=${{ steps.version.outputs.date }} \
+            --build-arg VCS_REF=${{ github.sha }} \
+            -t ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:latest \
+            -t ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:${{ steps.version.outputs.tag }} \
+            -t ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:${{ steps.version.outputs.date }} \
+            ./${{ matrix.service }}
+          
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:latest
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:${{ steps.version.outputs.tag }}
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:${{ steps.version.outputs.date }}
 
   # ==========================================
   # CD STAGE 2: Deploy to Azure Container Apps
@@ -304,10 +305,12 @@ jobs:
           
       - name: Deploy telegram-service
         run: |
+          REVISION_SUFFIX=$(date +'%Y%m%d-%H%M%S')
           az containerapp update \
             --name telegram-service \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --image "${{ steps.acr-creds.outputs.server }}/telegram-service:latest" \
+            --revision-suffix $REVISION_SUFFIX \
             --set-env-vars \
               "TELEGRAM_SERVICE_DB_URL=jdbc:postgresql://${{ steps.db.outputs.fqdn }}:5432/communication_platform" \
               "APP_DB_PASSWORD=${{ secrets.APP_DB_PASSWORD }}" \
