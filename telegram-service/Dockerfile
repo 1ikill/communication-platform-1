@@ -3,14 +3,19 @@ ARG ACR_SERVER
 FROM ${ACR_SERVER}/telegram-tdlib-base:latest AS tdlib-builder
 
 ########################################
-# Build the application
+# Build and test the application
 ########################################
 FROM tdlib-builder AS app-builder
 
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
-RUN mvn clean package -DskipTests
+
+# Run tests (TDLib is available from base image Maven repo)
+RUN mvn test
+
+# Build the JAR
+RUN mvn package -DskipTests
 
 ########################################
 # Final runtime image
