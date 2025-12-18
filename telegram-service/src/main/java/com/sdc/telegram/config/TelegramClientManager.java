@@ -34,7 +34,7 @@ public class TelegramClientManager  {
         this.resultHandler = resultHandler;
         this.credentialsRepository = credentialsRepository;
         this.cryptoUtils = cryptoUtils;
-        // preloadLibraries();
+        preloadLibraries();
         initializeClients();
     }
 
