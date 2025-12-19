@@ -60,12 +60,13 @@ class TelegramCredentialsControllerTest {
     @Test
     void addCredentials_WithMissingApiId_ShouldReturn400() throws Exception {
         createDto.setApiId(null);
-        doNothing().when(service).addCredentials(any(TelegramCredentialsCreateDto.class));
-        
+
         mockMvc.perform(post("/telegram-credentials/add")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createDto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(service);
     }
     
     @Test
@@ -113,12 +114,13 @@ class TelegramCredentialsControllerTest {
     @Test
     void addCredentials_WithNullAccountId_ShouldReturn400() throws Exception {
         createDto.setAccountId(null);
-        doNothing().when(service).addCredentials(any(TelegramCredentialsCreateDto.class));
-        
+
         mockMvc.perform(post("/telegram-credentials/add")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createDto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createDto)))
                 .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(service);
     }
     
     @Test
