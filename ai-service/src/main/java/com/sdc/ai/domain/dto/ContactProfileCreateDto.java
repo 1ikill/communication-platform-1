@@ -17,7 +17,7 @@ import com.sdc.ai.domain.model.ContactProfile;
 @Schema(description = "Contact profile create DTO")
 public class ContactProfileCreateDto {
     @Schema(description = "Contact name", example = "John")
-    @NotBlank
+    @NotBlank(message = "Contact name must not be blank")
     private String contactName;
 
     @Schema(description = "Relationship type", example = "SUPERVISOR")
@@ -37,6 +37,6 @@ public class ContactProfileCreateDto {
     private CommunicationPlatformType platform;
 
     @Schema(description = "Chat identifier", example = "1111111")
-    @NotBlank
+    @NotBlank(message = "Chat identifier must not be blank")
     private String chatIdentifier;
 }

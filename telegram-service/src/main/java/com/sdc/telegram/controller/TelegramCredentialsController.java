@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 /**
  * REST controller for managing Telegram credentials
@@ -23,7 +24,7 @@ public class TelegramCredentialsController {
 
     @PostMapping("/add")
     @Operation(summary = "Add telegram credentials")
-    public void addCredentials(@RequestBody final TelegramCredentialsCreateDto createDto) throws Exception {
+    public void addCredentials(@RequestBody @Valid final TelegramCredentialsCreateDto createDto) throws Exception {
         log.info("Received request POST /telegram-credentials/add");
         service.addCredentials(createDto);
         log.info("Produced response 200 for POST /telegram-credentials/add");

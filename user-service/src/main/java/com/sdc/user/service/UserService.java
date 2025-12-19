@@ -46,7 +46,7 @@ public class UserService {
     public UserDto register(final UserCreateDto createDto) {
         final User user = mapper.fromCreateDto(createDto);
         if (userRepository.existsByEmail(user.getEmail()) || userRepository.existsByUsername(user.getUsername())) {
-            throw new IllegalArgumentException("User already exists.");
+            throw new IllegalArgumentException("User with that email or username already exists.");
         }
 
         user.setRole(USER);

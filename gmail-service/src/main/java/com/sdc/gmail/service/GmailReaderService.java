@@ -163,7 +163,7 @@ public class GmailReaderService {
                             .execute();
                     messages.add(fullMessage);
                 } catch (Exception e) {
-                    log.error("Error fetching message details for messageId: {}", messageSummary.getId(), e);
+                    log.error("Error fetching message data for messageId: {}", messageSummary.getId(), e);
                 }
             }
         }

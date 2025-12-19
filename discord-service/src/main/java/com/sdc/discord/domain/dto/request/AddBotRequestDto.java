@@ -12,6 +12,6 @@ import lombok.Data;
 @Data
 public class AddBotRequestDto {
     @Schema(description = "Access token")
-    @NotBlank
+    @NotBlank(message = "Token must no be blank")
     private String token;
 }
