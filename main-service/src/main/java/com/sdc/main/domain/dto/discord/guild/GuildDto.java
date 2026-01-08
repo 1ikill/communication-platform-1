@@ -1,0 +1,26 @@
+package com.sdc.main.domain.dto.discord.guild;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+/**
+ * DTO with guild info
+ * @since 12.2025
+ */
+@Data
+@AllArgsConstructor
+@Schema(description = "Guild dto")
+public class GuildDto {
+    @Schema(description = "Id")
+    private String id;
+
+    @Schema(description = "Name")
+    private String name;
+
+    @Schema(description = "Icon url")
+    private String iconUrl;
+
+    @Schema(description = "Member count")
+    private int memberCount;
+}

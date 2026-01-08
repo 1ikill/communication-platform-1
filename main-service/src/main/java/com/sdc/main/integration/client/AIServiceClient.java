@@ -2,7 +2,11 @@ package com.sdc.main.integration.client;
 
 import com.sdc.main.domain.constants.CommunicationPlatformType;
 import com.sdc.main.config.properties.MicroserviceIntegrationProperties;
+import com.sdc.main.domain.dto.ai.ContactProfileCreateDto;
+import com.sdc.main.domain.dto.ai.ContactProfileDto;
+import com.sdc.main.domain.dto.ai.ContactProfilePatchDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -33,4 +37,31 @@ public class AIServiceClient {
                 .bodyToMono(String.class)
                 .block();
     }
+
+    public ContactProfileDto addContactProfile(final ContactProfileCreateDto createDto) {
+        return webClient.post()
+                .uri(fromHttpUrl(properties.getAiService().getAddContactProfileUrl())
+                        .build()
+                        .toString())
+                .bodyValue(createDto)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<ContactProfileDto>() {
+                })
+                .block();
+    }
+
+    public ContactProfileDto pathProfile(final Long id, final ContactProfilePatchDto patchDto) {
+        return webClient.patch()
+                .uri(fromHttpUrl(properties.getAiService().getPatchContactProfileUrl()).path(String.valueOf(id))
+                        .build()
+                        .toString())
+                .bodyValue(patchDto)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<ContactProfileDto>() {
+                })
+                .block();
+    }
+
+
+
 }

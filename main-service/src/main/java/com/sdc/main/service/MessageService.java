@@ -1,11 +1,14 @@
 package com.sdc.main.service;
 
-import com.sdc.main.domain.constants.DiscordMessageType;
+import com.sdc.main.domain.dto.discord.message.ChannelMessageDto;
+import com.sdc.main.domain.dto.discord.message.DiscordPrivateMessageDto;
+import com.sdc.main.domain.dto.gmail.GmailMessagesResponseDto;
 import com.sdc.main.domain.dto.request.BroadcastMessageRequestDto;
 import com.sdc.main.domain.dto.request.DiscordMessageRequestDto;
 import com.sdc.main.domain.dto.request.GmailMessageRequestDto;
 import com.sdc.main.domain.dto.request.MessageRequestDto;
 import com.sdc.main.domain.dto.request.TelegramMessageRequestDto;
+import com.sdc.main.domain.dto.telegram.message.MessageTdlibDto;
 import com.sdc.main.domain.mapper.MessageRequestMapper;
 import com.sdc.main.integration.client.AIServiceClient;
 import com.sdc.main.integration.client.DiscordServiceClient;
@@ -14,11 +17,14 @@ import com.sdc.main.integration.client.TelegramServiceClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.sdc.main.domain.constants.CommunicationPlatformType.DISCORD;
+import static com.sdc.main.domain.constants.CommunicationPlatformType.EMAIL;
 import static com.sdc.main.domain.constants.CommunicationPlatformType.TELEGRAM;
 
 /**
@@ -35,6 +41,13 @@ public class MessageService {
     private final DiscordServiceClient discordClient;
     private final MessageRequestMapper messageRequestMapper;
 
+    public MessageTdlibDto getTelegramMessage(final Long chatId, final Long messageId, final String accountId) {
+        return telegramClient.getTelegramMessage(chatId, messageId, accountId);
+    }
+
+    public List<MessageTdlibDto> findAllTelegramMessages(final Long chatId, final int limit, final String accountId) {
+        return telegramClient.findAllMessages(chatId, limit, accountId);
+    }
 
     public void sendTelegramMessage(final String originalMessage, final Long chatId, final String accountId,
                                                 final boolean personalize) {
@@ -49,7 +62,7 @@ public class MessageService {
                                  final boolean personalize) {
         String message = originalMessage;
         if (personalize) {
-            message = aiClient.customizeMessage(originalMessage, TELEGRAM, chatId);
+            message = aiClient.customizeMessage(originalMessage, EMAIL, chatId);
         }
         gmailClient.sendTextMessage(chatId, message, accountId, subject);
     }
@@ -58,7 +71,7 @@ public class MessageService {
                                  final boolean personalize) {
         String message = originalMessage;
         if (personalize) {
-            message = aiClient.customizeMessage(originalMessage, TELEGRAM, chatId);
+            message = aiClient.customizeMessage(originalMessage, DISCORD, chatId);
         }
         discordClient.sendChannelMessage(chatId, message, accountId);
     }
@@ -67,7 +80,7 @@ public class MessageService {
                                           final boolean personalize) {
         String message = originalMessage;
         if (personalize) {
-            message = aiClient.customizeMessage(originalMessage, TELEGRAM, chatId);
+            message = aiClient.customizeMessage(originalMessage, DISCORD, chatId);
         }
         discordClient.sendDirectMessage(chatId, message, accountId);
     }
@@ -107,6 +120,82 @@ public class MessageService {
                     throw new RuntimeException("Unknown discord message type");
             }
         }
+    }
+
+    public void sendTelegramImageMessage(final Long chatId, final MultipartFile image, final String message, final String accountId) {
+        telegramClient.sendImageMessage(chatId, image, message, accountId);
+    }
+
+    public void sendTelegramVideoMessage(final Long chatId, final MultipartFile video, final String message, final String accountId) {
+        telegramClient.sendVideoMessage(chatId, video, message, accountId);
+    }
+
+    public void sendTelegramDocumentMessage(final Long chatId, final MultipartFile document, final String message, final String accountId) {
+        telegramClient.sendDocumentMessage(chatId, document, message, accountId);
+    }
+
+    public void sendGmailFileMessage(final Long accountId, final String to, final String subject, final String body, final MultipartFile file) {
+        gmailClient.sendFile(accountId, to, subject, body, file);
+    }
+
+    public GmailMessagesResponseDto getGmailMessages(final Long accountId, final Integer maxResults, final String pageToken) {
+        return gmailClient.getMessages(accountId, maxResults, pageToken);
+    }
+
+    public GmailMessagesResponseDto getUnreadGmailMessages(final Long accountId, final Integer maxResults, final String pageToken) {
+        return gmailClient.getUnreadMessage(accountId, maxResults, pageToken);
+    }
+
+    public void markGmailMessageAsRead(final Long accountId, final String messageId) {
+        gmailClient.markAsRead(accountId, messageId);
+    }
+
+    public void markGmailMessageAsUnread(final Long accountId, final String messageId) {
+        gmailClient.markAsUnread(accountId, messageId);
+    }
+
+    public GmailMessagesResponseDto searchGmailMessages(final Long accountId, final String query, final Integer maxResults, final String pageToken) {
+        return gmailClient.searchMessages(accountId, query, maxResults, pageToken);
+    }
+
+    public void sendDiscordPrivateFileMessage(final Long botId, final String userId, final List<MultipartFile> files, final String message) {
+        discordClient.sendDmFileMessage(botId, userId, files, message);
+    }
+
+    public void sendDiscordGuildFileMessage(final Long botId, final String channelId, final List<MultipartFile> files, final String message) {
+        discordClient.sendChannelFileMessage(botId, channelId, files, message);
+    }
+
+    public List<ChannelMessageDto> getDiscordGuildChannelMessageHistory(final Long botId, final String channelId, final int limit) {
+        return discordClient.getGuildChannelHistory(botId, channelId, limit);
+    }
+
+    public List<DiscordPrivateMessageDto> getDiscordPrivateMessageHistory(final Long botId, final String channelId, final int limit) {
+        return discordClient.getHistory(botId, channelId, limit);
+    }
+
+    public List<DiscordPrivateMessageDto> searchDiscordPrivateMessages(final Long botId, final String channelId, final String query) {
+        return discordClient.searchPrivateMessages(botId, channelId, query);
+    }
+
+    public List<ChannelMessageDto> searchDiscordGuildChannelMessages(final Long botId, final String channelId, final String query) {
+        return discordClient.searchGuildMessages(botId, channelId, query);
+    }
+
+    public void deleteDiscordPrivateMessage(final Long botId, final List<Long> messageIds) {
+        discordClient.deletePrivateMessage(botId, messageIds);
+    }
+
+    public void deleteDiscordGuildChannelMessages(final Long botId, final List<String> messageIds, final String channelId) {
+        discordClient.deleteGuildMessage(botId, messageIds, channelId);
+    }
+
+    public void updateDiscordPrivateMessage(final Long botId, final Long messageId, final String updatedMessage) {
+        discordClient.updateMessage(botId, messageId, updatedMessage);
+    }
+
+    public void updateDiscordGuildChannelMessage(final Long botId, final String channelId, final String messageId, final String updatedMessage) {
+        discordClient.updateGuildMessage(botId, channelId, messageId, updatedMessage);
     }
 
     private Map<String, String> getPersonalizedMessages(final List<MessageRequestDto> request) {

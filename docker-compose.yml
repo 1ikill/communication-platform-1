@@ -145,7 +145,7 @@ services:
       TELEGRAM_SERVICE_URL: http://telegram-service:8084/telegram
       AI_SERVICE_URL: http://ai-service:8085/ai-service
       GMAIL_SERVICE_URL: http://gmail-service:8086/gmail
-      DISCORD_SERVICE_URL: http://discord-service:8088/api/discord/messages/
+      DISCORD_SERVICE_URL: http://discord-service:8088/api/discord/
       SPRING_FLYWAY_ENABLED: false
     env_file:
       - .env

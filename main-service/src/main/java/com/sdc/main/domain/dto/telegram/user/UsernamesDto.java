@@ -1,0 +1,25 @@
+package com.sdc.main.domain.dto.telegram.user;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@Schema(description = "Usernames DTO")
+/**
+ * DTO representing user usernames
+ * @since 12.2025
+ */
+public class UsernamesDto {
+    @Schema(description = "Active usernames")
+    private List<String> activeUsernames;
+
+    @Schema(description = "Disabled usernames")
+    private List<String> disabledUsernames;
+
+    @Schema(description = "Editable username")
+    private String editableUsername;
+}

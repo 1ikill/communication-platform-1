@@ -48,7 +48,7 @@ public class UserController {
     }
 
     @Operation(summary = "Login")
-    @PostMapping("auth/login")
+    @PostMapping("/auth/login")
     public Map<String, String> login(
             @RequestBody
             @Valid
@@ -61,7 +61,7 @@ public class UserController {
     }
 
     @Operation(summary = "Refresh token")
-    @PostMapping("auth/refresh")
+    @PostMapping("/auth/refresh")
     public Map<String, String> refresh(
             @RequestParam
             String refreshToken

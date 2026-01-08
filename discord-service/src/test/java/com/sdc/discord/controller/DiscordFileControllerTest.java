@@ -1,5 +1,6 @@
 package com.sdc.discord.controller;
 
+import com.sdc.discord.domain.dto.request.GetFileRequestDto;
 import com.sdc.discord.service.DiscordFileService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -9,7 +10,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -26,82 +26,82 @@ class DiscordFileControllerTest {
 
     @Test
     void testGetImageFromUrl() {
-        String url = "https://cdn.discordapp.com/attachments/123/456/image.jpg";
+        final GetFileRequestDto requestDto = new GetFileRequestDto("https://cdn.discordapp.com/attachments/123/456/image.jpg");
         StreamingResponseBody mockBody = mock(StreamingResponseBody.class);
 
-        when(discordFileService.getFileFromUrl(url)).thenReturn(mockBody);
+        when(discordFileService.getFileFromUrl(requestDto)).thenReturn(mockBody);
 
-        StreamingResponseBody result = controller.getImageFromUrl(url);
+        StreamingResponseBody result = controller.getImageFromUrl(requestDto);
 
         assertNotNull(result);
         assertEquals(mockBody, result);
-        verify(discordFileService, times(1)).getFileFromUrl(url);
+        verify(discordFileService, times(1)).getFileFromUrl(requestDto);
     }
 
     @Test
     void testGetVideoFromUrl() {
-        String url = "https://cdn.discordapp.com/attachments/123/456/video.mp4";
+        final GetFileRequestDto requestDto = new GetFileRequestDto("https://cdn.discordapp.com/attachments/123/456/video.mp4");
         StreamingResponseBody mockBody = mock(StreamingResponseBody.class);
 
-        when(discordFileService.getFileFromUrl(url)).thenReturn(mockBody);
+        when(discordFileService.getFileFromUrl(requestDto)).thenReturn(mockBody);
 
-        StreamingResponseBody result = controller.getVideoFromUrl(url);
+        StreamingResponseBody result = controller.getVideoFromUrl(requestDto);
 
         assertNotNull(result);
         assertEquals(mockBody, result);
-        verify(discordFileService, times(1)).getFileFromUrl(url);
+        verify(discordFileService, times(1)).getFileFromUrl(requestDto);
     }
 
     @Test
     void testGetDocumentFromUrl() {
-        String url = "https://cdn.discordapp.com/attachments/123/456/document.pdf";
+        final GetFileRequestDto requestDto = new GetFileRequestDto("https://cdn.discordapp.com/attachments/123/456/document.pdf");
         StreamingResponseBody mockBody = mock(StreamingResponseBody.class);
 
-        when(discordFileService.getFileFromUrl(url)).thenReturn(mockBody);
+        when(discordFileService.getFileFromUrl(requestDto)).thenReturn(mockBody);
 
-        StreamingResponseBody result = controller.getDocumentFromUrl(url);
+        StreamingResponseBody result = controller.getDocumentFromUrl(requestDto);
 
         assertNotNull(result);
         assertEquals(mockBody, result);
-        verify(discordFileService, times(1)).getFileFromUrl(url);
+        verify(discordFileService, times(1)).getFileFromUrl(requestDto);
     }
 
     @Test
     void testGetImageFromUrlWithQueryParams() {
-        String url = "https://cdn.discordapp.com/attachments/123/456/image.jpg?size=1024";
+        final GetFileRequestDto requestDto = new GetFileRequestDto("https://cdn.discordapp.com/attachments/123/456/image.jpg?size=1024");
         StreamingResponseBody mockBody = mock(StreamingResponseBody.class);
 
-        when(discordFileService.getFileFromUrl(url)).thenReturn(mockBody);
+        when(discordFileService.getFileFromUrl(requestDto)).thenReturn(mockBody);
 
-        StreamingResponseBody result = controller.getImageFromUrl(url);
+        StreamingResponseBody result = controller.getImageFromUrl(requestDto);
 
         assertNotNull(result);
-        verify(discordFileService).getFileFromUrl(url);
+        verify(discordFileService).getFileFromUrl(requestDto);
     }
 
     @Test
     void testGetVideoFromUrlDifferentFormat() {
-        String url = "https://cdn.discordapp.com/attachments/789/012/video.webm";
+        final GetFileRequestDto requestDto = new GetFileRequestDto("https://cdn.discordapp.com/attachments/789/012/video.webm");
         StreamingResponseBody mockBody = mock(StreamingResponseBody.class);
 
-        when(discordFileService.getFileFromUrl(url)).thenReturn(mockBody);
+        when(discordFileService.getFileFromUrl(requestDto)).thenReturn(mockBody);
 
-        StreamingResponseBody result = controller.getVideoFromUrl(url);
+        StreamingResponseBody result = controller.getVideoFromUrl(requestDto);
 
         assertNotNull(result);
-        verify(discordFileService).getFileFromUrl(url);
+        verify(discordFileService).getFileFromUrl(requestDto);
     }
 
     @Test
     void testGetDocumentFromUrlDifferentFormat() {
-        String url = "https://cdn.discordapp.com/attachments/345/678/file.docx";
+        final GetFileRequestDto requestDto = new GetFileRequestDto("https://cdn.discordapp.com/attachments/345/678/file.docx");
         StreamingResponseBody mockBody = mock(StreamingResponseBody.class);
 
-        when(discordFileService.getFileFromUrl(url)).thenReturn(mockBody);
+        when(discordFileService.getFileFromUrl(requestDto)).thenReturn(mockBody);
 
-        StreamingResponseBody result = controller.getDocumentFromUrl(url);
+        StreamingResponseBody result = controller.getDocumentFromUrl(requestDto);
 
         assertNotNull(result);
-        verify(discordFileService).getFileFromUrl(url);
+        verify(discordFileService).getFileFromUrl(requestDto);
     }
 }

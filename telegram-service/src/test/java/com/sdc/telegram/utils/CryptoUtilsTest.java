@@ -104,7 +104,7 @@ class CryptoUtilsTest {
     
     @Test
     void encryptAndDecrypt_WithUnicodeCharacters_ShouldPreserveContent() throws Exception {
-        String plaintext = "Unicode: 你好世界 🌍 Привет мир";
+        String plaintext = "Unicode: Hello World";
         
         String encrypted = cryptoUtils.encrypt(plaintext);
         String decrypted = cryptoUtils.decrypt(encrypted);

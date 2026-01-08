@@ -73,15 +73,63 @@ public class MicroserviceIntegrationProperties {
 
         @URL
         @NotBlank
+        private String getChatsMainUrl;
+
+        @URL
+        @NotBlank
+        private String getChatsArchiveUrl;
+
+        @URL
+        @NotBlank
+        private String getAccountInfoUrl;
+
+        @URL
+        @NotBlank
+        private String getAccountsInfoUrl;
+
+        @URL
+        @NotBlank
+        private String changeProfileImageUrl;
+
+        @URL
+        @NotBlank
+        private String getChatIdUrl;
+
+        @URL
+        @NotBlank
+        private String createChatUrl;
+
+        @URL
+        @NotBlank
+        private String getImageUrl;
+
+        @URL
+        @NotBlank
+        private String getVideoUrl;
+
+        @URL
+        @NotBlank
+        private String getDocumentUrl;
+
+        @URL
+        @NotBlank
+        private String getNotificationsUrl;
+
+        @URL
+        @NotBlank
+        private String createEmptyChatUrl;
+
+        @URL
+        @NotBlank
+        private String deleteEmptyChatUrl;
+
+        @URL
+        @NotBlank
         private String getChatFoldersUrl;
 
         @URL
         @NotBlank
         private String getChatsFolderUrl;
-
-        @URL
-        @NotBlank
-        private String getChatMessagesUrl;
 
         @URL
         @NotBlank
@@ -94,6 +142,34 @@ public class MicroserviceIntegrationProperties {
         @URL
         @NotBlank
         private String sendVideoMessageUrl;
+
+        @URL
+        @NotBlank
+        private String sendDocumentMessageUrl;
+
+        @URL
+        @NotBlank
+        private String sendPhoneUrl;
+
+        @URL
+        @NotBlank
+        private String sendCodeUrl;
+
+        @URL
+        @NotBlank
+        private String sendPasswordUrl;
+
+        @URL
+        @NotBlank
+        private String getAuthStateUrl;
+
+        @URL
+        @NotBlank
+        private String logoutUrl;
+
+        @URL
+        @NotBlank
+        private String addCredentialsUrl;
     }
 
     @Data
@@ -126,6 +202,22 @@ public class MicroserviceIntegrationProperties {
         @URL
         @NotBlank
         private String sendTextMessageUrl;
+
+        @URL
+        @NotBlank
+        private String getAuthUrl;
+
+        @URL
+        @NotBlank
+        private String sendFileUrl;
+
+        @URL
+        @NotBlank
+        private String getMeUrl;
+
+        @URL
+        @NotBlank
+        private String readerBaseUrl;
     }
 
     @Data
@@ -134,6 +226,50 @@ public class MicroserviceIntegrationProperties {
         @URL
         @NotBlank
         private String baseUrl;
+
+        @URL
+        @NotBlank
+        private String getBotsUrl;
+
+        @URL
+        @NotBlank
+        private String addBotUrl;
+
+        @NotBlank
+        private String getPrivateChatsUrl;
+
+        @NotBlank
+        private String getGuildsUrl;
+
+        @NotBlank
+        private String getUsersUrl;
+
+        @NotBlank
+        private String searchChatsUrl;
+
+        @URL
+        @NotBlank
+        private String getImageUrl;
+
+        @URL
+        @NotBlank
+        private String getVideoUrl;
+
+        @URL
+        @NotBlank
+        private String getDocumentUrl;
+
+        @NotBlank
+        private String sendChannelFileMessageUrl;
+
+        @NotBlank
+        private String sendPrivateFileMessageUrl;
+
+        @NotBlank
+        private String deletePrivateMessageUrl;
+
+        @NotBlank
+        private String deleteGuildMessageUrl;
 
         @NotBlank
         private String sendChannelMessageUrl;

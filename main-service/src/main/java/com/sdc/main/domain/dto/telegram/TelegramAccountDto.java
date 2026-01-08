@@ -1,0 +1,23 @@
+package com.sdc.main.domain.dto.telegram;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+/**
+ * DTO representing a connected Telegram account
+ * @since 12.2025
+ */
+@Data
+@AllArgsConstructor
+@Schema(description = "Connected account DTO")
+public class TelegramAccountDto {
+    @Schema(description = "Account identifier")
+    private String accountId;
+
+    @Schema(description = "Account name")
+    private String accountName;
+
+    @Schema(description = "Profile photo link")
+    private String photoRemoteId;
+}

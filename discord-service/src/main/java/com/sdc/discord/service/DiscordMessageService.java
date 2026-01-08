@@ -273,6 +273,7 @@ public class DiscordMessageService {
         final DiscordPrivateMessage message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new NotFoundException("Message is not found"));
 
+        log.info("MESSAGE:{}", message);
         if (!message.getBotId().equals(botId)) {
             throw new BadRequestException("Message does not belong to this bot");
         }

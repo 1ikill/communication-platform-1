@@ -33,5 +33,5 @@ COPY --from=app-builder /app/target/*.jar app.jar
 
 ENV LD_LIBRARY_PATH="/app/lib"
 
-EXPOSE 8082
+EXPOSE 8084
 ENTRYPOINT ["java","-Djava.library.path=/app/lib","-jar","app.jar"]

@@ -44,7 +44,7 @@ class TelegramAuthControllerTest {
     void sendPhoneNumber_WithValidData_ShouldReturn200() throws Exception {
         doNothing().when(telegramAuthService).sendPhoneNumber(anyString(), anyString());
         
-        mockMvc.perform(post("/auth/login/phone")
+        mockMvc.perform(post("/telegram/auth/login/phone")
                 .param("phone", PHONE)
                 .param("accountId", ACCOUNT_ID))
                 .andExpect(status().isOk());
@@ -54,7 +54,7 @@ class TelegramAuthControllerTest {
     
     @Test
     void sendPhoneNumber_WithMissingPhone_ShouldReturn400() throws Exception {
-        mockMvc.perform(post("/auth/login/phone")
+        mockMvc.perform(post("/telegram/auth/login/phone")
                 .param("accountId", ACCOUNT_ID))
                 .andExpect(status().isBadRequest());
         
@@ -63,7 +63,7 @@ class TelegramAuthControllerTest {
     
     @Test
     void sendPhoneNumber_WithMissingAccountId_ShouldReturn400() throws Exception {
-        mockMvc.perform(post("/auth/login/phone")
+        mockMvc.perform(post("/telegram/auth/login/phone")
                 .param("phone", PHONE))
                 .andExpect(status().isBadRequest());
         
@@ -76,7 +76,7 @@ class TelegramAuthControllerTest {
             .when(telegramAuthService).sendPhoneNumber(anyString(), anyString());
         
         assertThrows(Exception.class, () ->
-            mockMvc.perform(post("/auth/login/phone")
+            mockMvc.perform(post("/telegram/auth/login/phone")
                     .param("phone", PHONE)
                     .param("accountId", ACCOUNT_ID)));
     }
@@ -85,7 +85,7 @@ class TelegramAuthControllerTest {
     void sendAuthCode_WithValidData_ShouldReturn200() throws Exception {
         doNothing().when(telegramAuthService).sendAuthCode(anyString(), anyString());
         
-        mockMvc.perform(post("/auth/login/code")
+        mockMvc.perform(post("/telegram/auth/login/code")
                 .param("code", CODE)
                 .param("accountId", ACCOUNT_ID))
                 .andExpect(status().isOk());
@@ -95,7 +95,7 @@ class TelegramAuthControllerTest {
     
     @Test
     void sendAuthCode_WithMissingCode_ShouldReturn400() throws Exception {
-        mockMvc.perform(post("/auth/login/code")
+        mockMvc.perform(post("/telegram/auth/login/code")
                 .param("accountId", ACCOUNT_ID))
                 .andExpect(status().isBadRequest());
         
@@ -108,7 +108,7 @@ class TelegramAuthControllerTest {
             .when(telegramAuthService).sendAuthCode(anyString(), anyString());
         
         assertThrows(Exception.class, () ->
-            mockMvc.perform(post("/auth/login/code")
+            mockMvc.perform(post("/telegram/auth/login/code")
                     .param("code", CODE)
                     .param("accountId", ACCOUNT_ID)));
     }
@@ -117,7 +117,7 @@ class TelegramAuthControllerTest {
     void sendPassword_WithValidData_ShouldReturn200() throws Exception {
         doNothing().when(telegramAuthService).sendPassword(anyString(), anyString());
         
-        mockMvc.perform(post("/auth/login/password")
+        mockMvc.perform(post("/telegram/auth/login/password")
                 .param("password", PASSWORD)
                 .param("accountId", ACCOUNT_ID))
                 .andExpect(status().isOk());
@@ -127,7 +127,7 @@ class TelegramAuthControllerTest {
     
     @Test
     void sendPassword_WithMissingPassword_ShouldReturn400() throws Exception {
-        mockMvc.perform(post("/auth/login/password")
+        mockMvc.perform(post("/telegram/auth/login/password")
                 .param("accountId", ACCOUNT_ID))
                 .andExpect(status().isBadRequest());
         
@@ -138,7 +138,7 @@ class TelegramAuthControllerTest {
     void logout_WithValidAccountId_ShouldReturn200() throws Exception {
         doNothing().when(telegramAuthService).logout(anyString());
         
-        mockMvc.perform(post("/auth/logout")
+        mockMvc.perform(post("/telegram/auth/logout")
                 .param("accountId", ACCOUNT_ID))
                 .andExpect(status().isOk());
         
@@ -147,7 +147,7 @@ class TelegramAuthControllerTest {
     
     @Test
     void logout_WithMissingAccountId_ShouldReturn400() throws Exception {
-        mockMvc.perform(post("/auth/logout"))
+        mockMvc.perform(post("/telegram/auth/logout"))
                 .andExpect(status().isBadRequest());
         
         verify(telegramAuthService, never()).logout(anyString());
@@ -159,7 +159,7 @@ class TelegramAuthControllerTest {
             .when(telegramAuthService).logout(anyString());
         
         assertThrows(Exception.class, () ->
-            mockMvc.perform(post("/auth/logout")
+            mockMvc.perform(post("/telegram/auth/logout")
                     .param("accountId", ACCOUNT_ID)));
     }
     
@@ -168,7 +168,7 @@ class TelegramAuthControllerTest {
         AuthorizationStateReadyDto state = new AuthorizationStateReadyDto();
         when(telegramAuthService.getAuthorizationState(anyString())).thenReturn(state);
         
-        mockMvc.perform(get("/auth/state")
+        mockMvc.perform(get("/telegram/auth/state")
                 .param("accountId", ACCOUNT_ID))
                 .andExpect(status().isOk());
         
@@ -177,7 +177,7 @@ class TelegramAuthControllerTest {
     
     @Test
     void getAuthorizationState_WithMissingAccountId_ShouldReturn400() throws Exception {
-        mockMvc.perform(get("/auth/state"))
+        mockMvc.perform(get("/telegram/auth/state"))
                 .andExpect(status().isBadRequest());
         
         verify(telegramAuthService, never()).getAuthorizationState(anyString());
@@ -189,7 +189,7 @@ class TelegramAuthControllerTest {
             .thenThrow(new RuntimeException("Failed to get state"));
         
         assertThrows(Exception.class, () ->
-            mockMvc.perform(get("/auth/state")
+            mockMvc.perform(get("/telegram/auth/state")
                     .param("accountId", ACCOUNT_ID)));
     }
 }

@@ -1,6 +1,13 @@
 server:
   port: 8083
 
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 2048MB
+      max-request-size: 2048MB
+
 management:
   endpoints:
     web:
@@ -23,15 +30,34 @@ services:
     refresh-url: ${services.user-service.base-url}/auth/refresh
     create-user-admin-url: ${services.user-service.base-url}/admin/create-user
     patch-user-url: ${services.user-service.base-url}/path/
-    get-me=url: ${services.user-service.base-url}/me
+    get-me-url: ${services.user-service.base-url}/me
   telegram-service:
     base-url: ${TELEGRAM_SERVICE_URL}
+    get-chats-main-url: ${services.telegram-service.base-url}/main
+    get-chats-archive-url: ${services.telegram-service.base-url}/archive
+    get-account-info-url: ${services.telegram-service.base-url}/account
+    get-accounts-info-url: ${services.telegram-service.base-url}/accounts
+    change-profile-image-url: ${services.telegram-service.base-url}/profile/images
+    get-chat-id-url: ${services.telegram-service.base-url}/user-chat
+    create-chat-url: ${services.telegram-service.base-url}/create-chat/
+    get-image-url: ${services.telegram-service.base-url}/file/
+    get-video-url: ${services.telegram-service.base-url}/video/
+    get-document-url: ${services.telegram-service.base-url}/document/
+    get-notifications-url: ${services.telegram-service.base-url}/notifications
+    create-empty-chat-url: ${services.telegram-service.base-url}/empty-chats
+    delete-empty-chat-url: ${services.telegram-service.base-url}/empty-chats
     get-chat-folders-url: ${services.telegram-service.base-url}/chats/folders
     get-chats-folder-url: ${services.telegram-service.base-url}/folder
-    get-chat-messages-url: ${services.telegram-service.base-url}/messages
     send-text-message-url: ${services.telegram-service.base-url}/text
     send-image-message-url: ${services.telegram-service.base-url}/image
     send-video-message-url: ${services.telegram-service.base-url}/videos
+    send-document-message-url: ${services.telegram-service.base-url}/documents
+    send-phone-url: ${services.telegram-service.base-url}/auth/login/phone
+    send-code-url: ${services.telegram-service.base-url}/auth/login/code
+    send-password-url: ${services.telegram-service.base-url}/auth/login/password
+    get-auth-state-url: ${services.telegram-service.base-url}/auth/state
+    logout-url: ${services.telegram-service.base-url}/auth/logout
+    add-credentials-url: ${services.telegram-service.base-url}-credentials/add
   ai-service:
     base-url: ${AI_SERVICE_URL}
     add-contact-profile-url: ${services.ai-service.base-url}/profiles/add
@@ -40,7 +66,24 @@ services:
   gmail-service:
     base-url: ${GMAIL_SERVICE_URL}
     send-text-message-url: ${services.gmail-service.base-url}/send
+    get-auth-url: ${services.gmail-service.base-url}/auth
+    send-file-url: ${services.gmail-service.base-url}/send-file
+    get-me-url: ${services.gmail-service.base-url}/me
+    reader-base-url: ${GMAIL_SERVICE_URL}/reader/
   discord-service:
     base-url: ${DISCORD_SERVICE_URL}
+    get-bots-url: ${services.discord-service.base-url}/me/bots
+    add-bot-url: ${services.discord-service.base-url}/bots/add
+    get-private-chats-url: /chats/private
+    get-guilds-url: /chats/guilds
+    get-users-url: /chats/users
+    search-chats-url: /chats/search
+    get-image-url: ${services.discord-service.base-url}/files/image
+    get-video-url: ${services.discord-service.base-url}/files/video
+    get-document-url: ${services.discord-service.base-url}/files/document
     send-channel-message-url: /channel/send
     send-direct-message-url: /dm/send
+    send-channel-file-message-url: /channel/send-file
+    send-private-file-message-url: /dm/send-file
+    delete-private-message-url: /delete
+    delete-guild-message-url: /channel/delete

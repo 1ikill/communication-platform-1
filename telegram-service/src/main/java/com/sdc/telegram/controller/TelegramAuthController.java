@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
  */
 @Slf4j
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/telegram/auth")
 @RequiredArgsConstructor
 public class TelegramAuthController {
     private final TelegramAuthService telegramAuthService;

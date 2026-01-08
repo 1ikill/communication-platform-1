@@ -12,7 +12,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 @Slf4j
 @RestController
-@RequestMapping("/api/gmail")
+@RequestMapping("/gmail/reader")
 @RequiredArgsConstructor
 public class GmailReaderController {
     private final GmailReaderService gmailReaderService;
