@@ -400,7 +400,7 @@ jobs:
               "TELEGRAM_SERVICE_URL=https://${{ steps.services.outputs.telegram }}/telegram" \
               "AI_SERVICE_URL=https://${{ steps.services.outputs.ai }}/ai-service" \
               "GMAIL_SERVICE_URL=https://${{ steps.services.outputs.gmail }}/gmail" \
-              "DISCORD_SERVICE_URL=https://${{ steps.services.outputs.discord }}/api/discord/messages/" \
+              "DISCORD_SERVICE_URL=https://${{ steps.services.outputs.discord }}/api/discord/" \
               "JWT_SECRET=${{ secrets.JWT_SECRET }}" \
               "SPRING_FLYWAY_ENABLED=false"
               
