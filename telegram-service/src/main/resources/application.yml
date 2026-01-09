@@ -48,4 +48,4 @@ telegram:
       system-language-code: en
       device-model: Desktop
       application-version: "1.0"
-      database-directory: "/var/lib/tdlib/"
+      database-directory: "/mnt/tdlib/"
