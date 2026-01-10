@@ -1,5 +1,6 @@
 package com.sdc.main.domain.mapper;
 
+import com.sdc.main.domain.dto.request.DiscordMessageRequestDto;
 import com.sdc.main.domain.dto.request.GmailMessageRequestDto;
 import com.sdc.main.domain.dto.request.MessageRequestDto;
 import com.sdc.main.domain.dto.request.TelegramMessageRequestDto;
@@ -20,6 +21,8 @@ public abstract class MessageRequestMapper {
             return toViberMessageRequestDto((ViberMessageRequestDto) source, message);
         } else if (source instanceof GmailMessageRequestDto) {
             return toGmailMessageRequestDto((GmailMessageRequestDto) source, message);
+        } else if (source instanceof DiscordMessageRequestDto) {
+            return toDiscordMessageRequestDto((DiscordMessageRequestDto) source, message);
         }
 
         return null;
@@ -43,4 +46,11 @@ public abstract class MessageRequestMapper {
     @Mapping(target = "viberField", source = "source.viberField")
     @Mapping(target = "message", source = "message")
     public abstract ViberMessageRequestDto toViberMessageRequestDto(final ViberMessageRequestDto source, final String message);
+
+    @Mapping(target = "platform", source = "source.platform")
+    @Mapping(target = "chatIdentifier", source = "source.chatIdentifier")
+    @Mapping(target = "message", source = "message")
+    @Mapping(target = "accountId", source = "source.accountId")
+    @Mapping(target = "messageType", source = "source.messageType")
+    public abstract DiscordMessageRequestDto toDiscordMessageRequestDto(final DiscordMessageRequestDto source, final String message);
 }
